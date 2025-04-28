@@ -1,0 +1,23 @@
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+app.log
+tmp/
+logs/
+
+data/
+data
+
+*.egg-info
+
+.vscode
