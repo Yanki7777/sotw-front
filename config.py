@@ -7,6 +7,9 @@ load_dotenv()
 
 
 UNIVERSES_FILE = "../data/universes.json"  # JSON file for storing universes data
+ALIASES_FILE = "../data/topic_aliases.json"  # JSON file for storing aliases data
+
+
 
 APP_TITLE = "📈 State Of The World"
 APP_ICON = "📈"

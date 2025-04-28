@@ -2,6 +2,7 @@ import yfinance as yf
 import re
 import json
 import os
+from config import ALIASES_FILE
 
 
 def clean_company_name(name):
@@ -79,12 +80,10 @@ def clean_company_name(name):
 
 def load_topic_aliases():
     """Load topic aliases from an external JSON file."""
-    aliases_path = os.path.join(os.path.dirname(__file__), "..", "data", "topic_aliases.json")
-    print(f"Loading topic aliases from {aliases_path}...")
-    if not os.path.exists(aliases_path):
-        print(f"Aliases file not found at {aliases_path}. Using empty aliases.")
+    if not os.path.exists(ALIASES_FILE):
+        print(f"Aliases file not found at {ALIASES_FILE}. Using empty aliases.")
         return {}
-    with open(aliases_path, "r", encoding="utf-8") as f:
+    with open(ALIASES_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
