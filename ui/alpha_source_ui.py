@@ -4,8 +4,8 @@ import streamlit as st
 import pandas as pd
 from api_client import APIClient
 
+
 def display_alpha_source(universe):
-   
     if not universe:
         st.warning("No universe selected.")
         return

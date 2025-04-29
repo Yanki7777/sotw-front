@@ -6,11 +6,10 @@ from api_client import APIClient
 
 
 def display_newsapi_source(universe):
-    
     if not universe:
         st.warning("No universe selected.")
         return
-   
+
     # Fetch news for all topics with UI feedback
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
         all_topic_news, topic_averages, overall_sentiment_average, latest_articles, article_counts = (

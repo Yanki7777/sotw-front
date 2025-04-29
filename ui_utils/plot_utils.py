@@ -193,7 +193,9 @@ def create_one_feature_plot(universe_name, source, topic, feature_name, time_win
             topic_display = ""
         else:
             topic = str(topic)
-            df = APIClient.get_feed_from_db(source=source, topic=topic, feature_name=feature_name, universe_name=universe_name)
+            df = APIClient.get_feed_from_db(
+                source=source, topic=topic, feature_name=feature_name, universe_name=universe_name
+            )
             topic_display = topic
 
         if df is None or df.empty:

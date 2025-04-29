@@ -6,7 +6,6 @@ from api_client import APIClient
 
 
 def display_finlight_source(universe):
-    
     if not universe:
         st.warning("No universe selected.")
         return

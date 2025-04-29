@@ -6,7 +6,6 @@ from api_client import APIClient
 
 
 def display_meteo_source(universe):
-    
     if not universe:
         st.warning("No universe selected.")
         return
@@ -34,26 +33,30 @@ def display_meteo_source(universe):
             pm2_5 = air_quality.get("pm2_5", "N/A")
             carbon_monoxide = air_quality.get("carbon_monoxide", "N/A")
             timestamp = air_quality_timestamps.get(topic, "N/A")
-            
-            topic_data.append({
-                "Location": topic,
-                "US AQI": us_aqi,
-                "PM10": pm10,
-                "PM2.5": pm2_5,
-                "CO": carbon_monoxide,
-                "Timestamp": timestamp
-            })
+
+            topic_data.append(
+                {
+                    "Location": topic,
+                    "US AQI": us_aqi,
+                    "PM10": pm10,
+                    "PM2.5": pm2_5,
+                    "CO": carbon_monoxide,
+                    "Timestamp": timestamp,
+                }
+            )
         else:
             # Handle error case
-            topic_data.append({
-                "Location": topic,
-                "US AQI": "Error",
-                "PM10": "Error",
-                "PM2.5": "Error",
-                "CO": "Error",
-                "Timestamp": "N/A",
-                "Error": air_quality.get("error", "Unknown error")
-            })
+            topic_data.append(
+                {
+                    "Location": topic,
+                    "US AQI": "Error",
+                    "PM10": "Error",
+                    "PM2.5": "Error",
+                    "CO": "Error",
+                    "Timestamp": "N/A",
+                    "Error": air_quality.get("error", "Unknown error"),
+                }
+            )
 
     if topic_data:
         df = pd.DataFrame(topic_data)
@@ -110,29 +113,29 @@ def display_meteo_source(universe):
             continue
 
         st.subheader(f"{topic.upper()}")
-        
+
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("#### Primary Pollutants")
             metrics = {
                 "US AQI": air_quality.get("us_aqi", "N/A"),
                 "PM10 (μg/m³)": air_quality.get("pm10", "N/A"),
-                "PM2.5 (μg/m³)": air_quality.get("pm2_5", "N/A")
+                "PM2.5 (μg/m³)": air_quality.get("pm2_5", "N/A"),
             }
             for label, value in metrics.items():
                 st.metric(label=label, value=value)
-        
+
         with col2:
             st.markdown("#### Secondary Pollutants")
             metrics = {
                 "Carbon Monoxide (μg/m³)": air_quality.get("carbon_monoxide", "N/A"),
                 "Nitrogen Dioxide (μg/m³)": air_quality.get("nitrogen_dioxide", "N/A"),
                 "Sulphur Dioxide (μg/m³)": air_quality.get("sulphur_dioxide", "N/A"),
-                "Ozone (μg/m³)": air_quality.get("ozone", "N/A")
+                "Ozone (μg/m³)": air_quality.get("ozone", "N/A"),
             }
             for label, value in metrics.items():
                 st.metric(label=label, value=value)
-        
+
         st.caption(f"Data timestamp: {air_quality_timestamps.get(topic, 'N/A')}")
         st.divider()

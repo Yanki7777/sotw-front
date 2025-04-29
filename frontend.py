@@ -1,4 +1,5 @@
 """Streamlit UI for the Reddit Sentiment Analysis app."""
+
 # Add feeder path from backend
 import sys
 from pathlib import Path
@@ -103,7 +104,9 @@ def streamlit_main():
         display_topic(universe)
 
     with main_tabs[2]:
-        source_tabs = st.tabs(["REDDIT source", "ALPHA source", "NEWSAPI source", "FINLIGHT source", "GNEWS source", "METEO source"])
+        source_tabs = st.tabs(
+            ["REDDIT source", "ALPHA source", "NEWSAPI source", "FINLIGHT source", "GNEWS source", "METEO source"]
+        )
 
         with source_tabs[0]:
             col1, col2 = st.columns([1, 5])
@@ -138,7 +141,7 @@ def streamlit_main():
 
             if fetch_finlight_button:
                 display_finlight_source(universe)
-                
+
         with source_tabs[4]:
             col1, col2 = st.columns([1, 5])
             with col1:
@@ -146,7 +149,7 @@ def streamlit_main():
 
             if fetch_gnews_button:
                 display_gnews_source(universe)
-                
+
         with source_tabs[5]:
             col1, col2 = st.columns([1, 5])
             with col1:

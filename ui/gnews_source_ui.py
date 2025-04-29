@@ -6,7 +6,6 @@ from api_client import APIClient
 
 
 def display_gnews_source(universe):
-    
     if not universe:
         st.warning("No universe selected.")
         return
@@ -17,9 +16,7 @@ def display_gnews_source(universe):
             APIClient.process_gnews_feed(universe)
         )
 
-    print(
-        f"GNEWS source data summary: {len(all_topic_news)} data points analyzed across {len(topic_averages)} topics"
-    )
+    print(f"GNEWS source data summary: {len(all_topic_news)} data points analyzed across {len(topic_averages)} topics")
 
     if not any(all_topic_news.values()):
         st.warning("No news data found for the selected topics.")
