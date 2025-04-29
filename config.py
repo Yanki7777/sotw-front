@@ -5,10 +5,10 @@ import os
 load_dotenv()
 
 # Set API_ENV to 'development' or 'production' in your environment or .env file
-API_ENV = os.environ.get("API_ENV", "development")
+API_ENV = os.environ.get("API_ENV", "development").lower()
 API_BASE_URLS = {
-    "development": "http://localhost:8000",
-    "production": "https://api.stateoftheworld.com",  # Replace with your actual production API URL
+    "development": "http://localhost:8002",
+    "production": "51.84.65.79:8002",  # Replace with your actual production API URL
 }
 API_BASE_URL = API_BASE_URLS.get(API_ENV, API_BASE_URLS["development"])
 
