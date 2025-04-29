@@ -5,9 +5,7 @@ import pandas as pd
 import json
 from typing import Optional
 import streamlit as st
-
-# API base URL - should be configurable in production
-API_BASE_URL = "http://localhost:8000"  # Change this to match your API server
+from config import API_BASE_URL
 
 
 class APIClient:
