@@ -2,7 +2,6 @@
 
 import requests
 import pandas as pd
-import json
 from typing import Optional
 import streamlit as st
 from config import API_BASE_URL

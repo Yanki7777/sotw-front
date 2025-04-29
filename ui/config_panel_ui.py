@@ -2,11 +2,15 @@
 
 import streamlit as st
 from api_client import APIClient
+from config import API_BASE_URL
 
 
 def configure_sidebar():
     """Configure the sidebar and return user inputs."""
     st.sidebar.title("Configuration")
+    print(f"API_BASE_URL: {API_BASE_URL}")
+    # Display server environment
+    st.sidebar.text(f"Server URL: {API_BASE_URL}")
 
     # Universe selector
     universes = APIClient.get_all_universes()

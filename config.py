@@ -5,12 +5,13 @@ import os
 load_dotenv()
 
 # Set API_ENV to 'development' or 'production' in your environment or .env file
-API_ENV = os.environ.get("API_ENV", "development").lower()
+envi = os.environ.get("ENVIRON").lower()
 API_BASE_URLS = {
     "development": "http://localhost:8022",
-    "production": "51.84.65.79:8022",  #AWS EC2 instance
+    "production": "http://51.84.65.79:8022",  #AWS EC2 instance
 }
-API_BASE_URL = API_BASE_URLS.get(API_ENV, API_BASE_URLS["development"])
+API_BASE_URL = API_BASE_URLS.get(envi, API_BASE_URLS["development"])
+
 
 
 APP_TITLE = "📈 State Of The World"
