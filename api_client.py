@@ -34,16 +34,16 @@ class APIClient:
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def get_topic_description(universe, topic_name):
-        """Get the description for a topic in a universe."""
+        """Get the description for a topic in a universe directly from the universe object."""
         try:
-            # Convert universe object to JSON string for the query parameter
-            universe_json = json.dumps(universe)
-            response = requests.get(
-                f"{API_BASE_URL}/db/topic-description", params={"universe": universe_json, "topic_name": topic_name}
-            )
-            return response.json().get("description", "")
+            # Search for the topic description in the universe object
+            if universe and "topics" in universe:
+                for topic in universe.get("topics", []):
+                    if topic.get("name") == topic_name:
+                        return topic.get("description", "")
+            return ""  # Return empty string if topic not found
         except Exception as e:
-            print(f"Error fetching topic description: {e}")
+            print(f"Error getting topic description: {e}")
             return ""
 
     @staticmethod
