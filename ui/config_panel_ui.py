@@ -3,13 +3,14 @@
 import streamlit as st
 from api_client import APIClient
 from config import API_BASE_URL
+# from datetime import datetime
 
 
 def configure_sidebar():
     """Configure the sidebar and return user inputs."""
-    st.sidebar.title("Configuration")
+
     print(f"API_BASE_URL: {API_BASE_URL}")
-    # Display server environment
+
     st.sidebar.text(f"Server URL: {API_BASE_URL}")
 
     # Universe selector
@@ -19,13 +20,16 @@ def configure_sidebar():
     # Find the actual universe object
     selected_universe = next((u for u in universes if u.get("universe_name") == selected_universe_name), None)
 
-    # Configure topic mentions counter
-    dark_mode = configure_mentions_counter()
+    # Add top news section to the sidebar first
+    display_top_news_sidebar()
+
+    # Now configure app settings (moved below news)
+    dark_mode = configure_settings()
 
     return dark_mode, selected_universe
 
 
-def configure_mentions_counter():
+def configure_settings():
     """Configure the app settings in the sidebar."""
     st.sidebar.markdown("---")
     st.sidebar.subheader("App Settings")
@@ -34,3 +38,53 @@ def configure_mentions_counter():
     dark_mode = st.sidebar.checkbox("Dark Mode", value=False)
 
     return dark_mode
+
+
+def display_top_news_sidebar():
+    """Display top news in the sidebar."""
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Latest News")
+
+    # Refresh button for news
+    refresh_news = st.sidebar.button("Refresh News", use_container_width=True)
+
+    # Initialize news fetching state if not already set
+    if "top_news" not in st.session_state or refresh_news:
+        with st.sidebar.spinner("Loading news..."):
+            news_articles, count = APIClient.get_top_news(max_results=5)
+            st.session_state.top_news = news_articles
+            st.session_state.top_news_count = count
+
+    # Display the news in a single container
+    news_container = st.sidebar.container()
+
+    with news_container:
+        if st.session_state.top_news:
+            for i, article in enumerate(st.session_state.top_news):
+                title = article.get("title", "No title")
+                description = article.get("description", "No description")
+                published_date = article.get("published date UTC", "")
+                url = article.get("url", "")
+                publisher = article.get("publisher", "")
+
+                # Display each news article with styling
+                st.markdown(f"**{title}**")
+                st.write(description)
+
+                # Display published date, publisher, and URL in a single line if available
+                footer_elements = []
+                if published_date:
+                    footer_elements.append(f"Published: {published_date}")
+                if publisher:
+                    footer_elements.append(f"{publisher}")
+                if url:
+                    footer_elements.append(f"[Read more]({url})")
+
+                if footer_elements:
+                    st.caption(" | ".join(footer_elements))
+
+                # Add separator between articles except after the last one
+                if i < len(st.session_state.top_news) - 1:
+                    st.markdown("---")
+        else:
+            st.info("No news available at the moment.")

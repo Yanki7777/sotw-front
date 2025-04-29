@@ -1,9 +1,9 @@
-"""SOTW Streamlit UI """
+"""SOTW Streamlit UI"""
 
 from datetime import datetime
 
 from api_client import APIClient
-from ui.config_panel_ui import configure_mentions_counter, configure_sidebar
+from ui.config_panel_ui import  configure_sidebar
 from ui.reddit_source_ui import display_reddit_source
 from ui.alpha_source_ui import display_alpha_source
 from ui.universe_ui import display_universe
@@ -17,6 +17,7 @@ from config import APP_TITLE, APP_ICON
 
 # Apply patches before importing streamlit
 from streamlit_patches import apply_torch_classes_patch
+
 apply_torch_classes_patch()
 import streamlit as st
 
@@ -30,6 +31,12 @@ def streamlit_main():
         layout="wide",
         initial_sidebar_state="expanded",
     )
+
+    # Preload top news for sidebar if not already in session state
+    if "top_news" not in st.session_state:
+        news_articles, count = APIClient.get_top_news(max_results=5)
+        st.session_state.top_news = news_articles
+        st.session_state.top_news_count = count
 
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Get the current time
     print(f"{current_time} ------------------------------ Streamlit UI -------------------------------")
@@ -62,8 +69,7 @@ def streamlit_main():
     st.markdown(
         f"<div style='text-align:left; font-size:1.5rem; margin-top:1.2em; color:#888;'>Universe: <b>{universe.get('universe_name')}</b></div>",
         unsafe_allow_html=True,
-    )   
-   
+    )
 
     if dark_mode:
         # Apply dark theme CSS
@@ -105,7 +111,7 @@ def streamlit_main():
             col1, col2 = st.columns([1, 5])
             with col1:
                 fetch_alpha_news_button = st.button("Fetch ALPHA News", use_container_width=True)
-   
+
             if fetch_alpha_news_button:
                 display_alpha_source(universe)
 

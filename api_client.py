@@ -213,3 +213,15 @@ class APIClient:
         except Exception as e:
             print(f"Error processing Meteo feed: {e}")
             return {}, {}
+
+    @staticmethod
+    @st.cache_data(ttl=300)  # Cache for 5 minutes
+    def get_top_news(max_results=10):
+        """Get top news articles."""
+        try:
+            response = requests.get(f"{API_BASE_URL}/news/top", params={"max_results": max_results})
+            data = response.json()
+            return data.get("data", []), data.get("count", 0)
+        except Exception as e:
+            print(f"Error fetching top news: {e}")
+            return [], 0
