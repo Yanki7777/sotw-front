@@ -50,10 +50,15 @@ def display_top_news_sidebar():
 
     # Initialize news fetching state if not already set
     if "top_news" not in st.session_state or refresh_news:
-        with st.sidebar.spinner("Loading news..."):
+        # Fix: Use st.spinner() instead of st.sidebar.spinner()
+        spinner_placeholder = st.sidebar.empty()
+        spinner_placeholder.text("Loading news...")
+        try:
             news_articles, count = APIClient.get_top_news(max_results=5)
             st.session_state.top_news = news_articles
             st.session_state.top_news_count = count
+        finally:
+            spinner_placeholder.empty()
 
     # Display the news in a single container
     news_container = st.sidebar.container()
@@ -65,7 +70,10 @@ def display_top_news_sidebar():
                 description = article.get("description", "No description")
                 published_date = article.get("published date UTC", "")
                 url = article.get("url", "")
-                publisher = article.get("publisher", "")
+                publisher_data = article.get("publisher", "")
+                
+                # Extract publisher title if publisher is a dictionary
+                publisher = publisher_data.get("title", publisher_data) if isinstance(publisher_data, dict) else publisher_data
 
                 # Display each news article with styling
                 st.markdown(f"**{title}**")

@@ -34,7 +34,7 @@ def streamlit_main():
 
     # Preload top news for sidebar if not already in session state
     if "top_news" not in st.session_state:
-        news_articles, count = APIClient.get_top_news(max_results=5)
+        news_articles, count = APIClient.get_top_news(max_results=8)
         st.session_state.top_news = news_articles
         st.session_state.top_news_count = count
 
