@@ -1,15 +1,8 @@
-"""Streamlit UI for the Reddit Sentiment Analysis app."""
-
-# Add feeder path from backend
-import sys
-from pathlib import Path
-
-# Append the parent directory (../sotw-backend) to sys.path
-sys.path.append(str(Path(__file__).resolve().parent.parent / "sotw-feeder"))
+"""SOTW Streamlit UI """
 
 from datetime import datetime
 
-# Import UI components
+from api_client import APIClient
 from ui.config_panel_ui import configure_mentions_counter, configure_sidebar
 from ui.reddit_source_ui import display_reddit_source
 from ui.alpha_source_ui import display_alpha_source
@@ -20,17 +13,12 @@ from ui.finlight_source_ui import display_finlight_source
 from ui.gnews_source_ui import display_gnews_source
 from ui.meteo_source_ui import display_meteo_source
 
-# Import configuration
 from config import APP_TITLE, APP_ICON
 
 # Apply patches before importing streamlit
 from streamlit_patches import apply_torch_classes_patch
-
 apply_torch_classes_patch()
 import streamlit as st
-
-# Import API client to store universes in session state
-from api_client import APIClient
 
 
 def streamlit_main():
@@ -74,10 +62,8 @@ def streamlit_main():
     st.markdown(
         f"<div style='text-align:left; font-size:1.5rem; margin-top:1.2em; color:#888;'>Universe: <b>{universe.get('universe_name')}</b></div>",
         unsafe_allow_html=True,
-    )
-
-    print(f"---------------- Selected universe: {universe}")
-    # ---------------------------------------------------------------
+    )   
+   
 
     if dark_mode:
         # Apply dark theme CSS
@@ -95,7 +81,6 @@ def streamlit_main():
 
     # Remove "Karma" from main_tabs
     main_tabs = st.tabs(["Universe", "Topic", "Sources"])
-    print(f"---------------- Current universe: {universe}")
 
     with main_tabs[0]:
         display_universe(universe)
@@ -120,8 +105,7 @@ def streamlit_main():
             col1, col2 = st.columns([1, 5])
             with col1:
                 fetch_alpha_news_button = st.button("Fetch ALPHA News", use_container_width=True)
-
-            # Handle news sentiment fetching when button is pressed
+   
             if fetch_alpha_news_button:
                 display_alpha_source(universe)
 
@@ -130,7 +114,6 @@ def streamlit_main():
             with col1:
                 fetch_newsapi_button = st.button("Fetch NEWSAPI", use_container_width=True)
 
-            # Handle NewsAPI sentiment fetching when button is pressed
             if fetch_newsapi_button:
                 display_newsapi_source(universe)
 

@@ -3,15 +3,16 @@
 import requests
 import pandas as pd
 import json
-from typing import Dict, Any, List, Optional, Union
+from typing import Optional
 import streamlit as st
 
 # API base URL - should be configurable in production
 API_BASE_URL = "http://localhost:8000"  # Change this to match your API server
 
+
 class APIClient:
     """Client for interacting with the SOTW API."""
-    
+
     @staticmethod
     def get_health_status():
         """Check API health status."""
@@ -20,7 +21,7 @@ class APIClient:
             return response.json()
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
-    
+
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def get_all_universes():
@@ -31,7 +32,7 @@ class APIClient:
         except Exception as e:
             print(f"Error fetching universes: {e}")
             return []
-    
+
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def get_topic_description(universe, topic_name):
@@ -40,14 +41,13 @@ class APIClient:
             # Convert universe object to JSON string for the query parameter
             universe_json = json.dumps(universe)
             response = requests.get(
-                f"{API_BASE_URL}/db/topic-description", 
-                params={"universe": universe_json, "topic_name": topic_name}
+                f"{API_BASE_URL}/db/topic-description", params={"universe": universe_json, "topic_name": topic_name}
             )
             return response.json().get("description", "")
         except Exception as e:
             print(f"Error fetching topic description: {e}")
             return ""
-    
+
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def get_feed_from_db(
@@ -57,7 +57,7 @@ class APIClient:
         feature_name: Optional[str] = None,
         feature_category: Optional[str] = None,
         limit: Optional[int] = None,
-        universe_name: Optional[str] = None
+        universe_name: Optional[str] = None,
     ):
         """Get feed data from the database with optional filters."""
         try:
@@ -68,51 +68,46 @@ class APIClient:
                 "feature_name": feature_name,
                 "feature_category": feature_category,
                 "limit": limit,
-                "universe_name": universe_name
+                "universe_name": universe_name,
             }
             # Remove None values from params
             params = {k: v for k, v in params.items() if v is not None}
-            
+
             response = requests.get(f"{API_BASE_URL}/db/feed", params=params)
             data = response.json().get("data", [])
-            
+
             if data:
                 df = pd.DataFrame(data)
-                # Convert timestamp columns to datetime
+                # Convert timestamp columns to datetime using ISO8601 format
                 for col in ["created_timestamp", "original_timestamp"]:
                     if col in df.columns:
-                        df[col] = pd.to_datetime(df[col])
+                        df[col] = pd.to_datetime(df[col], format="ISO8601")
                 return df
             return None
         except Exception as e:
             print(f"Error fetching feed data: {e}")
             return None
-    
+
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def get_latest_feed_timestamp(
         source: Optional[str] = None,
         topic: Optional[str] = None,
         feature_name: Optional[str] = None,
-        universe_name: Optional[str] = None
+        universe_name: Optional[str] = None,
     ):
         """Get the timestamp of the most recent feed entry."""
         try:
-            params = {
-                "source": source,
-                "topic": topic,
-                "feature_name": feature_name,
-                "universe_name": universe_name
-            }
+            params = {"source": source, "topic": topic, "feature_name": feature_name, "universe_name": universe_name}
             # Remove None values from params
             params = {k: v for k, v in params.items() if v is not None}
-            
+
             response = requests.get(f"{API_BASE_URL}/db/feed/latest-timestamp", params=params)
             return response.json().get("latest_timestamp")
         except Exception as e:
             print(f"Error fetching latest timestamp: {e}")
             return None
-    
+
     @staticmethod
     def process_fmp_feed(universe):
         """Process FMP feed data."""
@@ -123,7 +118,7 @@ class APIClient:
         except Exception as e:
             print(f"Error processing FMP feed: {e}")
             return {}, {}
-    
+
     @staticmethod
     def process_alpha_feed(universe):
         """Process Alpha Vantage feed data."""
@@ -135,12 +130,12 @@ class APIClient:
                 data.get("topic_averages", {}),
                 data.get("overall_sentiment_average", 0),
                 data.get("latest_articles", {}),
-                data.get("article_counts", {})
+                data.get("article_counts", {}),
             )
         except Exception as e:
             print(f"Error processing Alpha feed: {e}")
             return {}, {}, 0, {}, {}
-    
+
     @staticmethod
     def process_newsapi_feed(universe):
         """Process NewsAPI feed data."""
@@ -152,12 +147,12 @@ class APIClient:
                 data.get("topic_averages", {}),
                 data.get("overall_sentiment_average", 0),
                 data.get("latest_articles", {}),
-                data.get("article_counts", {})
+                data.get("article_counts", {}),
             )
         except Exception as e:
             print(f"Error processing NewsAPI feed: {e}")
             return {}, {}, 0, {}, {}
-    
+
     @staticmethod
     def process_gnews_feed(universe):
         """Process GNews feed data."""
@@ -169,12 +164,12 @@ class APIClient:
                 data.get("topic_averages", {}),
                 data.get("overall_sentiment_average", 0),
                 data.get("latest_articles", {}),
-                data.get("article_counts", {})
+                data.get("article_counts", {}),
             )
         except Exception as e:
             print(f"Error processing GNews feed: {e}")
             return {}, {}, 0, {}, {}
-    
+
     @staticmethod
     def process_finlight_feed(universe):
         """Process Finlight feed data."""
@@ -186,12 +181,12 @@ class APIClient:
                 data.get("topic_averages", {}),
                 data.get("overall_sentiment_average", 0),
                 data.get("latest_articles", {}),
-                data.get("article_counts", {})
+                data.get("article_counts", {}),
             )
         except Exception as e:
             print(f"Error processing Finlight feed: {e}")
             return {}, {}, 0, {}, {}
-    
+
     @staticmethod
     def process_reddit_feed(universe):
         """Process Reddit feed data."""
@@ -205,12 +200,12 @@ class APIClient:
                 data.get("topic_num_comments", {}),
                 data.get("topic_last_timestamps", {}),
                 data.get("topic_averages", {}),
-                data.get("overall_sentiment_average", 0)
+                data.get("overall_sentiment_average", 0),
             )
         except Exception as e:
             print(f"Error processing Reddit feed: {e}")
             return [], {}, {}, {}, {}, {}, 0
-    
+
     @staticmethod
     def process_meteo_feed(universe):
         """Process Meteo feed data."""

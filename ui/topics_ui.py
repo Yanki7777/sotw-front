@@ -2,7 +2,7 @@
 
 import streamlit as st
 import pandas as pd
-from ui_utils.plot_utils import create_one_feature_plot
+from plot_utils import create_one_feature_plot
 from api_client import APIClient
 
 
