@@ -6,7 +6,6 @@ from pathlib import Path
 # Append the parent directory (../sotw-backend) to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent / "sotw-feeder"))
 
-
 from datetime import datetime
 
 # Import UI components
@@ -19,7 +18,6 @@ from ui.topics_ui import display_topic
 from ui.finlight_source_ui import display_finlight_source
 from ui.gnews_source_ui import display_gnews_source
 from ui.meteo_source_ui import display_meteo_source
-from ui.meteo_source_ui import display_meteo_source
 
 # Import configuration
 from config import APP_TITLE, APP_ICON
@@ -30,6 +28,8 @@ from streamlit_patches import apply_torch_classes_patch
 apply_torch_classes_patch()
 import streamlit as st
 
+# Import API client to store universes in session state
+from api_client import APIClient
 
 
 def streamlit_main():
@@ -44,6 +44,10 @@ def streamlit_main():
 
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Get the current time
     print(f"{current_time} ------------------------------ Streamlit UI -------------------------------")
+
+    # Initialize universes in session state
+    if "universes" not in st.session_state:
+        st.session_state.universes = APIClient.get_all_universes()
 
     st.title(APP_TITLE)
 

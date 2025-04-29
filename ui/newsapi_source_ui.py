@@ -2,7 +2,7 @@
 
 import streamlit as st
 import pandas as pd
-from feeds.newsapi_feed import process_newsapi_feed
+from api_client import APIClient
 
 
 def display_newsapi_source(universe):
@@ -11,11 +11,10 @@ def display_newsapi_source(universe):
         st.warning("No universe selected.")
         return
    
-
     # Fetch news for all topics with UI feedback
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
         all_topic_news, topic_averages, overall_sentiment_average, latest_articles, article_counts = (
-            process_newsapi_feed(universe)
+            APIClient.process_newsapi_feed(universe)
         )
 
     print(

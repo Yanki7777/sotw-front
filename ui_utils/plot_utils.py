@@ -2,7 +2,7 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from database.db_manage import get_feed_from_db
+from api_client import APIClient
 
 from config import NEGATIVE_SENTIMENT_THRESHOLD, POSITIVE_SENTIMENT_THRESHOLD, SENTIMENT_COLORS
 
@@ -189,11 +189,11 @@ def create_one_feature_plot(universe_name, source, topic, feature_name, time_win
         feature_name = str(feature_name) if feature_name is not None else "unknown"
 
         if topic is None:
-            df = get_feed_from_db(source=source, feature_name=feature_name, universe_name=universe_name)
+            df = APIClient.get_feed_from_db(source=source, feature_name=feature_name, universe_name=universe_name)
             topic_display = ""
         else:
             topic = str(topic)
-            df = get_feed_from_db(source=source, topic=topic, feature_name=feature_name, universe_name=universe_name)
+            df = APIClient.get_feed_from_db(source=source, topic=topic, feature_name=feature_name, universe_name=universe_name)
             topic_display = topic
 
         if df is None or df.empty:

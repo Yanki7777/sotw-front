@@ -2,7 +2,7 @@
 
 import streamlit as st
 import pandas as pd
-from feeds.alpha_feed import process_alpha_feed
+from api_client import APIClient
 
 def display_alpha_source(universe):
    
@@ -12,7 +12,9 @@ def display_alpha_source(universe):
 
     # Pass the universe directly
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
-        all_topic_news, topic_averages, overall_sentiment_average, latest_articles, article_counts = process_alpha_feed(universe)
+        all_topic_news, topic_averages, overall_sentiment_average, latest_articles, article_counts = (
+            APIClient.process_alpha_feed(universe)
+        )
 
     print(f"ALPHA source data summary: {len(all_topic_news)} data points analyzed across {len(topic_averages)} topics")
 

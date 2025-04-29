@@ -2,7 +2,7 @@
 
 import streamlit as st
 import pandas as pd
-from feeds.meteo_feed import process_meteo_feed
+from api_client import APIClient
 
 
 def display_meteo_source(universe):
@@ -13,7 +13,7 @@ def display_meteo_source(universe):
 
     # Pass the universe directly
     with st.spinner(f"Fetching air quality data for {len(universe.get('topics'))} location(s)..."):
-        topic_air_quality, air_quality_timestamps = process_meteo_feed(universe)
+        topic_air_quality, air_quality_timestamps = APIClient.process_meteo_feed(universe)
 
     print(f"METEO source data summary: {len(topic_air_quality)} locations analyzed")
 

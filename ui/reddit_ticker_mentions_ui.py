@@ -3,6 +3,9 @@
 import streamlit as st
 from feeds.reddit_feed import count_topic_mentions_in_subreddit
 
+# Note: This functionality would need to be exposed via an API endpoint
+# and refactored accordingly. For now, keeping the direct import.
+
 
 def display_topic_mentions(
     subreddits, topics, max_posts, positive_karma_only, hours_lookback=24, scan_all_comments=False

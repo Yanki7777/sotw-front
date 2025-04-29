@@ -2,8 +2,8 @@
 
 import streamlit as st
 import pandas as pd
-from utils.plot_utils import create_one_feature_plot
-from database.db_manage import get_feed_from_db, get_topic_description
+from ui_utils.plot_utils import create_one_feature_plot
+from api_client import APIClient
 
 
 def get_feature_names_for_source(df, source):
@@ -58,11 +58,11 @@ def display_topic(universe):
         unsafe_allow_html=True,
     )
 
-    all_feed_data = get_feed_from_db(universe_name=universe.get("universe_name"))
+    all_feed_data = APIClient.get_feed_from_db(universe_name=universe.get("universe_name"))
     available_topics = sorted(all_feed_data["topic"].unique().tolist()) if all_feed_data is not None else []
 
     def topic_display_name(topic):
-        desc = get_topic_description(universe, topic)
+        desc = APIClient.get_topic_description(universe, topic)
         if desc:
             return f"{topic} ({desc})"
         return topic

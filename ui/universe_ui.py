@@ -3,8 +3,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.plot_utils import create_one_feature_plot
-from database.db_manage import get_feed_from_db, get_latest_feed_timestamp, get_topic_description
+from ui_utils.plot_utils import create_one_feature_plot
+from api_client import APIClient
 
 
 def filter_feed_by_time(df, time_param):
@@ -34,7 +34,7 @@ def filter_feed_by_time(df, time_param):
 def get_available_sources(universe):
     """Get available sources and their features from feed data"""
     try:
-        df = get_feed_from_db(universe_name=universe.get("universe_name"))
+        df = APIClient.get_feed_from_db(universe_name=universe.get("universe_name"))
         if df is None or df.empty:
             return [], {}
         sources = sorted(df["source"].unique().tolist())
@@ -59,7 +59,7 @@ def display_universe_plot(universe_name, selected_source, selected_feature, time
 
     # Use get_topic_description to get the description for the selected feature
     if universe and selected_feature:
-        desc = get_topic_description(universe, selected_feature)
+        desc = APIClient.get_topic_description(universe, selected_feature)
         if desc:
             topic_display = f"{selected_feature} ({desc})"
         else:
@@ -153,7 +153,7 @@ def display_universe(universe):
 
     last_update = None
     if available_features and selected_feature != "No features available":
-        last_update = get_latest_feed_timestamp(
+        last_update = APIClient.get_latest_feed_timestamp(
             source=selected_source,
             feature_name=selected_feature,
             universe_name=universe.get("universe_name"),

@@ -2,8 +2,8 @@
 
 import streamlit as st
 import numpy as np
-from utils.plot_utils import create_reddit_source_sentiment_plot, create_reddit_source_topic_plot
-from feeds.reddit_feed import process_reddit_feed
+from ui_utils.plot_utils import create_reddit_source_sentiment_plot, create_reddit_source_topic_plot
+from api_client import APIClient
 from config import (
     NEGATIVE_SENTIMENT_THRESHOLD,
     POSITIVE_SENTIMENT_THRESHOLD,
@@ -25,7 +25,7 @@ def display_reddit_source(universe):
             last_timestamps,
             topic_averages,
             overall_sentiment_average,
-        ) = process_reddit_feed(universe)
+        ) = APIClient.process_reddit_feed(universe)
 
         print(
             f"REDDIT source data summary: {len(sentiment_scores)} data points analyzed across {len(topic_sentiments)} topics"

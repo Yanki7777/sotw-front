@@ -1,8 +1,7 @@
 """Configuration panel for the Reddit Sentiment Analysis app."""
 
 import streamlit as st
-
-from database.db_manage import get_all_universes
+from api_client import APIClient
 
 
 def configure_sidebar():
@@ -10,7 +9,7 @@ def configure_sidebar():
     st.sidebar.title("Configuration")
 
     # Universe selector
-    universes = get_all_universes()
+    universes = APIClient.get_all_universes()
     universe_names = [u.get("universe_name") for u in universes]
     selected_universe_name = st.sidebar.selectbox("Select Universe", universe_names)
     # Find the actual universe object
