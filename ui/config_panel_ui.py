@@ -54,7 +54,7 @@ def display_top_news_sidebar():
         spinner_placeholder = st.sidebar.empty()
         spinner_placeholder.text("Loading news...")
         try:
-            news_articles, count = APIClient.get_top_news(max_results=5)
+            news_articles, count = APIClient.get_top_news(max_results=8)
             st.session_state.top_news = news_articles
             st.session_state.top_news_count = count
         finally:
@@ -71,9 +71,11 @@ def display_top_news_sidebar():
                 published_date = article.get("published date UTC", "")
                 url = article.get("url", "")
                 publisher_data = article.get("publisher", "")
-                
+
                 # Extract publisher title if publisher is a dictionary
-                publisher = publisher_data.get("title", publisher_data) if isinstance(publisher_data, dict) else publisher_data
+                publisher = (
+                    publisher_data.get("title", publisher_data) if isinstance(publisher_data, dict) else publisher_data
+                )
 
                 # Display each news article with styling
                 st.markdown(f"**{title}**")
@@ -82,7 +84,7 @@ def display_top_news_sidebar():
                 # Display published date, publisher, and URL in a single line if available
                 footer_elements = []
                 if published_date:
-                    footer_elements.append(f"Published: {published_date}")
+                    footer_elements.append(f"**Published: {published_date}**")
                 if publisher:
                     footer_elements.append(f"{publisher}")
                 if url:
