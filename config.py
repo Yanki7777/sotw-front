@@ -2,10 +2,11 @@
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv(override=True)  
 
 # Set API_ENV to 'development' or 'production' in your environment or .env file
 envi = os.environ.get("ENVIRON").lower()
+print(f"Environment: {envi}")
 API_BASE_URLS = {
     "development": "http://localhost:8022",
     "production": "http://51.84.65.79:8022",  #AWS EC2 instance
