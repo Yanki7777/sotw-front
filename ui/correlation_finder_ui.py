@@ -1,4 +1,4 @@
-"""Simplified Streamlit component for displaying correlation finder."""
+"""Streamlit component for displaying correlation finder."""
 
 import streamlit as st
 import pandas as pd
@@ -26,8 +26,7 @@ def display_correlation_finder():
     with col2:
         st.subheader("Feed 2")
         feed2 = select_feed(2, universes)
-
-    time_index = TIME_WINDOW_OPTIONS.index(TIME_WINDOW_DAY)
+ 
 
     # Initialize time window in session state if not present
     if "correlation_time_window" not in st.session_state:

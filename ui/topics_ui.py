@@ -115,9 +115,7 @@ def display_topic(universe):
                     key="topic_analysis_time_selector",
                     on_change=on_topic_time_window_change,
                 )
-
-                # Use the session state value directly
-                time_window = st.session_state.topic_time_window
+               
 
             with refresh_col:
 
