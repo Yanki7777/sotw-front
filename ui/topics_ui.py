@@ -101,13 +101,23 @@ def display_topic(universe):
                 if "topic_time_window" not in st.session_state:
                     st.session_state.topic_time_window = TIME_WINDOW_DAY
 
-                time_window = st.selectbox(
+                def on_topic_time_window_change():
+                    # Get the value directly from the widget key
+                    st.session_state.topic_time_window = st.session_state.topic_analysis_time_selector
+                    # Force a refresh when time window changes
+                    st.cache_data.clear()
+                    st.session_state["topic_data_refreshed"] = True
+
+                st.selectbox(
                     "Time Window:",
                     TIME_WINDOW_OPTIONS,
                     index=TIME_WINDOW_OPTIONS.index(st.session_state.topic_time_window),
                     key="topic_analysis_time_selector",
+                    on_change=on_topic_time_window_change,
                 )
-                st.session_state.topic_time_window = time_window
+
+                # Use the session state value directly
+                time_window = st.session_state.topic_time_window
 
             with refresh_col:
 
@@ -137,7 +147,7 @@ def display_topic(universe):
                 st.write("")
                 st.caption(f"<span style='font-size:15px;'>{data_summary}</span>", unsafe_allow_html=True)
 
-        time_param = time_window
+        time_param = st.session_state.topic_time_window  # Use session state value directly
 
         if all_feed_data is None or all_feed_data.empty:
             st.warning("No feed data available. Please make sure you've collected data.")
@@ -160,6 +170,8 @@ def display_topic(universe):
                     feature_name = row["feature_name"]
                     feature_key = f"{source}:{feature_name}"
                     try:
+                        # Use timestamp to ensure unique plot keys
+                        timestamp = pd.Timestamp.now().isoformat()
                         feature_plot_result = create_one_feature_plot(
                             universe.get("universe_name"), source, selected_topic, feature_name, time_param
                         )
@@ -167,7 +179,7 @@ def display_topic(universe):
                             target_fig, plot_key = feature_plot_result
                         else:
                             target_fig = feature_plot_result
-                            plot_key = f"{source}_{selected_topic}_{feature_name}_{time_param}"
+                            plot_key = f"{source}_{selected_topic}_{feature_name}_{time_param}_{timestamp}"
                         if target_fig is not None:
                             st.plotly_chart(target_fig, use_container_width=True, key=plot_key)
                             displayed_features.add(feature_key)
@@ -192,6 +204,8 @@ def display_topic(universe):
                         continue
                     st.subheader(f"{topic_display_name(selected_topic)} - {feature}")
                     try:
+                        # Use timestamp to ensure unique plot keys
+                        timestamp = pd.Timestamp.now().isoformat()
                         feature_plot_result = create_one_feature_plot(
                             universe.get("universe_name"), source, selected_topic, feature, time_param
                         )
@@ -199,7 +213,7 @@ def display_topic(universe):
                             feature_fig, plot_key = feature_plot_result
                         else:
                             feature_fig = feature_plot_result
-                            plot_key = f"{source}_{selected_topic}_{feature}_{time_param}"
+                            plot_key = f"{source}_{selected_topic}_{feature}_{time_param}_{timestamp}"
                         if feature_fig is not None:
                             st.plotly_chart(feature_fig, use_container_width=True, key=plot_key)
                             displayed_features.add(feature_key)

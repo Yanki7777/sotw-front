@@ -28,19 +28,44 @@ def display_correlation_finder():
         feed2 = select_feed(2, universes)
 
     time_index = TIME_WINDOW_OPTIONS.index(TIME_WINDOW_DAY)
-    time_window = st.selectbox("Select Time Window:", TIME_WINDOW_OPTIONS, index=time_index)
+
+    # Initialize time window in session state if not present
+    if "correlation_time_window" not in st.session_state:
+        st.session_state.correlation_time_window = TIME_WINDOW_DAY
+
+    def on_correlation_time_change():
+        # Get the value directly from the widget key
+        st.session_state.correlation_time_window = st.session_state.correlation_time_selector
+        # Force a refresh of data
+        st.cache_data.clear()
+
+    # Use selectbox with on_change callback
+    st.selectbox(
+        "Select Time Window:",
+        TIME_WINDOW_OPTIONS,
+        index=TIME_WINDOW_OPTIONS.index(st.session_state.correlation_time_window),
+        key="correlation_time_selector",
+        on_change=on_correlation_time_change,
+    )
+
+    # Get time window from session state
+    time_window = st.session_state.correlation_time_window
 
     if st.button("Generate Correlation Plot", type="primary", use_container_width=True):
         if feed1 and feed2:
             with st.spinner("Generating plot..."):
+                # Use timestamp to ensure unique keys for plots
+                timestamp = pd.Timestamp.now().isoformat()
                 df1, df2 = get_correlation_data(feed1, feed2, time_window)
                 if df1 is not None and df2 is not None:
                     fig = create_dual_axis_plot(feed1, feed2, df1, df2)
                     corr_value = calculate_correlation(df1, df2)
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key=f"corr_plot_{timestamp}")
                     if corr_value is not None:
-                        st.metric("Pearson Correlation Coefficient", f"{corr_value:.4f}")
+                        st.metric(
+                            "Pearson Correlation Coefficient", f"{corr_value:.4f}", key=f"corr_metric_{timestamp}"
+                        )
                 else:
                     st.warning("Unable to generate plot. Check data availability.")
         else:

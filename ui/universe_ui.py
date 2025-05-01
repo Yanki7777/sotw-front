@@ -83,14 +83,27 @@ def display_universe(universe):
             st.session_state.universe_selected_feature = selected_feature
 
         with col3:
-            time_window = st.selectbox(
+            # First, update the session state in the on_change handler
+            def on_time_window_change():
+                # Get the value directly from the widget key
+                st.session_state.universe_time_window = st.session_state.feature_time_selector
+                # Force a refresh when time window changes
+                st.cache_data.clear()
+                st.session_state["universe_data_refreshed"] = True
+                print(f"Time window changed to: {st.session_state.universe_time_window}")
+
+            # Then render the selectbox with the on_change handler
+            st.selectbox(
                 "Time Window:",
                 TIME_WINDOW_OPTIONS,
                 index=TIME_WINDOW_OPTIONS.index(st.session_state.universe_time_window),
                 key="feature_time_selector",
+                on_change=on_time_window_change,
             )
-            st.session_state.universe_time_window = time_window
-            print(f"Time window selected: {time_window}")
+
+            # Use the session state value directly
+            time_window = st.session_state.universe_time_window
+            print(f"Current time window: {time_window}")
 
         last_update = None
         if available_features and selected_feature != "No features available":
@@ -162,26 +175,30 @@ def display_universe_plot(universe_name, selected_source, selected_feature, time
         topic_display = feature_display
 
     with st.spinner(f"Loading {feature_display} data from {source_display}..."):
+        # Ensure we're using the current time window from session state
+        current_time_window = st.session_state.universe_time_window
         feature_plot_result = create_one_feature_plot(
             universe_name,
             selected_source,
             None,
             selected_feature,
-            time_window,
+            current_time_window,  # Use the session state value
         )
         if isinstance(feature_plot_result, tuple) and len(feature_plot_result) == 2:
             feature_plot, plot_key = feature_plot_result
         else:
             feature_plot = feature_plot_result
-            plot_key = f"{selected_source}_all_{selected_feature}_{time_window}"
+            # Add timestamp to ensure plot key is always unique when time window changes
+            timestamp = pd.Timestamp.now().isoformat()
+            plot_key = f"{selected_source}_all_{selected_feature}_{current_time_window}_{timestamp}"
 
         if feature_plot is not None:
             st.plotly_chart(feature_plot, use_container_width=True, key=plot_key)
         else:
             display_name = topic_display if topic_display else feature_display
             st.warning(
-                f"No data available for {display_name} from {source_display} for {time_window}."
-                if time_window != TIME_WINDOW_ALL
+                f"No data available for {display_name} from {source_display} for {current_time_window}."
+                if current_time_window != TIME_WINDOW_ALL
                 else f"No data available for {display_name} from {source_display}."
             )
 
