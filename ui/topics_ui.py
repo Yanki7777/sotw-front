@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, parse_time_window, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
+from utils.time_utils import filter_dataframe_by_time, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
 
 
 def get_feature_names_for_source(df, source):
@@ -137,7 +137,7 @@ def display_topic(universe):
                 st.write("")
                 st.caption(f"<span style='font-size:15px;'>{data_summary}</span>", unsafe_allow_html=True)
 
-        time_param = parse_time_window(time_window)
+        time_param = time_window
 
         if all_feed_data is None or all_feed_data.empty:
             st.warning("No feed data available. Please make sure you've collected data.")

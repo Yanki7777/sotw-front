@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import parse_time_window, TIME_WINDOW_OPTIONS, TIME_WINDOW_ALL
+from utils.time_utils import TIME_WINDOW_OPTIONS, TIME_WINDOW_ALL
 
 
 def display_universe(universe):
@@ -90,8 +90,7 @@ def display_universe(universe):
                 key="feature_time_selector",
             )
             st.session_state.universe_time_window = time_window
-
-        time_param = parse_time_window(time_window)
+            print(f"Time window selected: {time_window}")
 
         last_update = None
         if available_features and selected_feature != "No features available":
@@ -122,9 +121,7 @@ def display_universe(universe):
             st.button("🔄 Refresh", help="Refresh feed data", key="universe_refresh_button", on_click=refresh_feed)
 
         if available_features and selected_feature != "No features available":
-            display_universe_plot(
-                universe.get("universe_name"), selected_source, selected_feature, time_param, time_window
-            )
+            display_universe_plot(universe.get("universe_name"), selected_source, selected_feature, time_window)
         else:
             st.info("Please select a data source and feature to view the data.")
 
@@ -145,7 +142,7 @@ def get_available_sources(universe):
         return [], {}
 
 
-def display_universe_plot(universe_name, selected_source, selected_feature, time_param, time_window):
+def display_universe_plot(universe_name, selected_source, selected_feature, time_window):
     source_display = selected_source
     feature_display = selected_feature
 
@@ -170,21 +167,21 @@ def display_universe_plot(universe_name, selected_source, selected_feature, time
             selected_source,
             None,
             selected_feature,
-            time_param,
+            time_window,
         )
         if isinstance(feature_plot_result, tuple) and len(feature_plot_result) == 2:
             feature_plot, plot_key = feature_plot_result
         else:
             feature_plot = feature_plot_result
-            plot_key = f"{selected_source}_all_{selected_feature}_{time_param}"
+            plot_key = f"{selected_source}_all_{selected_feature}_{time_window}"
 
         if feature_plot is not None:
             st.plotly_chart(feature_plot, use_container_width=True, key=plot_key)
         else:
             display_name = topic_display if topic_display else feature_display
             st.warning(
-                f"No data available for {display_name} from {source_display} for {time_window.lower()}."
-                if time_window != "All Time"
+                f"No data available for {display_name} from {source_display} for {time_window}."
+                if time_window != TIME_WINDOW_ALL
                 else f"No data available for {display_name} from {source_display}."
             )
 

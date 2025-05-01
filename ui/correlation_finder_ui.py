@@ -1,335 +1,132 @@
-"""Component for displaying correlation finder in Streamlit."""
+"""Simplified Streamlit component for displaying correlation finder."""
 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from utils.api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, parse_time_window, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
+from utils.time_utils import filter_dataframe_by_time, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
 
 
 def display_correlation_finder():
-    """
-    Display the correlation finder interface in Streamlit.
-    Allows users to select two feeds and displays a correlation plot with dual y-axes.
-    """
-    # Use container to isolate this component
-    corr_container = st.container()
+    st.title("📊 Correlation Finder")
+    st.write("Select two data feeds to analyze their correlation.")
 
-    with corr_container:
-        st.title("📊 Correlation Finder")
-        st.write("Select two data feeds to analyze for correlation over time.")
+    universes = APIClient.get_all_universes()
+    if not universes:
+        st.warning("No universes available.")
+        return
 
-        # Get all universes
-        universes = APIClient.get_all_universes()
-        if not universes:
-            st.warning("No universes available. Please check your data configuration.")
-            return
+    col1, col2 = st.columns(2)
 
-        # Initialize feed selection state if needed
-        for i in range(1, 3):
-            if f"feed{i}_universe" not in st.session_state:
-                st.session_state[f"feed{i}_universe"] = None
-                st.session_state[f"feed{i}_topic"] = None
-                st.session_state[f"feed{i}_source"] = None
-                st.session_state[f"feed{i}_feature"] = None
+    with col1:
+        st.subheader("Feed 1")
+        feed1 = select_feed(1, universes)
 
-        # Initialize plot data in session state if needed
-        if "correlation_plot_data" not in st.session_state:
-            st.session_state.correlation_plot_data = None
-            st.session_state.correlation_value = None
+    with col2:
+        st.subheader("Feed 2")
+        feed2 = select_feed(2, universes)
 
-        # Create two columns for feed selectors
-        col1, col2 = st.columns(2)
+    time_index = TIME_WINDOW_OPTIONS.index(TIME_WINDOW_DAY)
+    time_window = st.selectbox("Select Time Window:", TIME_WINDOW_OPTIONS, index=time_index)
 
-        with col1:
-            st.subheader("Feed 1")
-            feed1 = select_feed(1, universes)
+    if st.button("Generate Correlation Plot", type="primary", use_container_width=True):
+        if feed1 and feed2:
+            with st.spinner("Generating plot..."):
+                df1, df2 = get_correlation_data(feed1, feed2, time_window)
+                if df1 is not None and df2 is not None:
+                    fig = create_dual_axis_plot(feed1, feed2, df1, df2)
+                    corr_value = calculate_correlation(df1, df2)
 
-        with col2:
-            st.subheader("Feed 2")
-            feed2 = select_feed(2, universes)
-
-        # Time window selection for the plot
-        time_index = TIME_WINDOW_OPTIONS.index(TIME_WINDOW_DAY) if TIME_WINDOW_DAY in TIME_WINDOW_OPTIONS else 0
-        if "correlation_time_window" not in st.session_state:
-            st.session_state.correlation_time_window = TIME_WINDOW_OPTIONS[time_index]
-
-        time_window = st.selectbox(
-            "Select Time Window:", TIME_WINDOW_OPTIONS, index=time_index, key="correlation_time_selector"
-        )
-        st.session_state.correlation_time_window = time_window
-
-        time_param = parse_time_window(time_window)
-
-        # Generate correlation plot button
-        if st.button("Generate Correlation Plot", type="primary", use_container_width=True, key="corr_gen_button"):
-            if feed1 is not None and feed2 is not None:
-                with st.spinner("Generating correlation plot..."):
-                    # Load both feed data sets at once to avoid redundant API calls
-                    df1, df2 = get_correlation_data(feed1, feed2, time_param)
-
-                    if df1 is not None and df2 is not None and not df1.empty and not df2.empty:
-                        fig = create_dual_axis_plot(feed1, feed2, df1, df2)
-                        corr_value = calculate_correlation(df1, df2)
-
-                        st.session_state.correlation_plot_data = fig
-                        st.session_state.correlation_value = corr_value
-                    else:
-                        st.warning("Could not generate plot. Please check that both feeds have valid numeric data.")
-            else:
-                st.warning("Please select two complete feeds to generate a correlation plot.")
-
-        # Display plot if it exists in session state
-        if st.session_state.correlation_plot_data is not None:
-            st.plotly_chart(st.session_state.correlation_plot_data, use_container_width=True)
-            if st.session_state.correlation_value is not None:
-                st.metric("Pearson Correlation Coefficient", f"{st.session_state.correlation_value:.4f}")
+                    st.plotly_chart(fig, use_container_width=True)
+                    if corr_value is not None:
+                        st.metric("Pearson Correlation Coefficient", f"{corr_value:.4f}")
+                else:
+                    st.warning("Unable to generate plot. Check data availability.")
+        else:
+            st.warning("Select two complete feeds.")
 
 
 def select_feed(index, universes):
-    """
-    Creates a cascading selection interface for a single feed.
-    Returns the selected feed as a dictionary or None if incomplete.
-    """
-    # Use session state keys for persistence
     prefix = f"feed{index}_"
-    universe_key = f"{prefix}universe"
-    topic_key = f"{prefix}topic"
-    source_key = f"{prefix}source"
-    feature_key = f"{prefix}feature"
 
-    # Universe selection
-    universe_options = {universe.get("universe_name"): universe for universe in universes}
-    selected_universe_name = st.selectbox(
-        "Select Universe:",
-        options=list(universe_options.keys()),
-        key=f"{prefix}universe_select",
-        on_change=lambda: reset_selections(prefix, level="universe"),
-    )
+    selected_universe = st.selectbox("Universe:", [u["universe_name"] for u in universes], key=f"{prefix}universe")
 
-    # Store selected universe
-    st.session_state[universe_key] = selected_universe_name
-
-    # Get feed data for the selected universe
-    feed_data = APIClient.get_feed_from_db(universe_name=selected_universe_name)
-    if feed_data is None or feed_data.empty:
-        st.warning(f"No data available for universe: {selected_universe_name}")
+    feed_data = APIClient.get_feed_from_db(universe_name=selected_universe)
+    if feed_data.empty:
+        st.warning(f"No data for universe {selected_universe}")
         return None
 
-    # Topic selection - depends on universe
-    topic_options = sorted(feed_data["topic"].unique().tolist())
-
-    selected_topic = st.selectbox(
-        "Select Topic:",
-        options=topic_options,
-        key=f"{prefix}topic_select",
-        on_change=lambda: reset_selections(prefix, level="topic"),
-    )
-
-    # Store selected topic
-    st.session_state[topic_key] = selected_topic
-
-    # Source selection - depends on universe and topic
+    selected_topic = st.selectbox("Topic:", feed_data["topic"].unique(), key=f"{prefix}topic")
     topic_data = feed_data[feed_data["topic"] == selected_topic]
-    source_options = sorted(topic_data["source"].unique().tolist())
 
-    selected_source = st.selectbox(
-        "Select Source:",
-        options=source_options,
-        key=f"{prefix}source_select",
-        on_change=lambda: reset_selections(prefix, level="source"),
-    )
+    selected_source = st.selectbox("Source:", topic_data["source"].unique(), key=f"{prefix}source")
+    source_data = topic_data[topic_data["source"] == selected_source]
 
-    # Store selected source
-    st.session_state[source_key] = selected_source
+    selected_feature = st.selectbox("Feature:", source_data["feature_name"].unique(), key=f"{prefix}feature")
 
-    # Feature selection - depends on universe, topic, and source
-    topic_source_data = topic_data[topic_data["source"] == selected_source]
-    feature_options = sorted(topic_source_data["feature_name"].unique().tolist())
-
-    selected_feature = st.selectbox("Select Feature:", options=feature_options, key=f"{prefix}feature_select")
-
-    # Store selected feature
-    st.session_state[feature_key] = selected_feature
-
-    # Return complete feed information
     return {
-        "universe_name": selected_universe_name,
+        "universe_name": selected_universe,
         "topic": selected_topic,
         "source": selected_source,
         "feature_name": selected_feature,
-        "display_name": f"{selected_universe_name}: {selected_topic} - {selected_feature} ({selected_source})",
+        "display_name": f"{selected_universe}: {selected_topic} - {selected_feature} ({selected_source})",
     }
 
 
-def reset_selections(prefix, level):
-    """Reset cascade selections below the specified level"""
-    if level == "universe":
-        st.session_state[f"{prefix}topic"] = None
-        st.session_state[f"{prefix}source"] = None
-        st.session_state[f"{prefix}feature"] = None
-    elif level == "topic":
-        st.session_state[f"{prefix}source"] = None
-        st.session_state[f"{prefix}feature"] = None
-    elif level == "source":
-        st.session_state[f"{prefix}feature"] = None
-
-    # Clear plot data when selections change
-    st.session_state.correlation_plot_data = None
-    st.session_state.correlation_value = None
-
-
 def get_correlation_data(feed1, feed2, time_window):
-    """
-    Load data for both feeds at once to reduce redundant API calls.
+    # Create copies of feed dictionaries without display_name
+    feed1_params = {k: v for k, v in feed1.items() if k != "display_name"}
+    feed2_params = {k: v for k, v in feed2.items() if k != "display_name"}
 
-    Returns:
-    - Tuple of (df1, df2) containing processed dataframes ready for correlation
-    """
-    if feed1 is None or feed2 is None:
-        return None, None
+    df1 = APIClient.get_feed_from_db(**feed1_params)
+    df2 = APIClient.get_feed_from_db(**feed2_params)
 
-    # Get data for both feeds
-    df1 = APIClient.get_feed_from_db(
-        source=feed1["source"],
-        topic=feed1["topic"],
-        feature_name=feed1["feature_name"],
-        universe_name=feed1["universe_name"],
-    )
-
-    df2 = APIClient.get_feed_from_db(
-        source=feed2["source"],
-        topic=feed2["topic"],
-        feature_name=feed2["feature_name"],
-        universe_name=feed2["universe_name"],
-    )
-
-    if df1 is None or df2 is None or df1.empty or df2.empty:
-        return None, None
-
-    # Filter by time window
     df1 = filter_dataframe_by_time(df1, time_window)
     df2 = filter_dataframe_by_time(df2, time_window)
 
-    if df1 is None or df2 is None or df1.empty or df2.empty:
+    if df1.empty or df2.empty:
         return None, None
 
-    # Convert values to numeric
-    try:
-        df1["feature_value"] = pd.to_numeric(df1["feature_value"])
-        df2["feature_value"] = pd.to_numeric(df2["feature_value"])
-    except (ValueError, TypeError):
-        return None, None
+    df1["feature_value"] = pd.to_numeric(df1["feature_value"], errors="coerce")
+    df2["feature_value"] = pd.to_numeric(df2["feature_value"], errors="coerce")
 
-    # Sort by timestamp
-    df1 = df1.sort_values("created_timestamp")
-    df2 = df2.sort_values("created_timestamp")
+    df1.dropna(inplace=True)
+    df2.dropna(inplace=True)
+
+    df1.sort_values("created_timestamp", inplace=True)
+    df2.sort_values("created_timestamp", inplace=True)
 
     return df1, df2
 
 
 def create_dual_axis_plot(feed1, feed2, df1, df2):
-    """
-    Creates a plot with dual y-axes for comparing two different feeds over time.
-
-    Parameters:
-    - feed1, feed2: Feed selection dictionaries
-    - df1, df2: Preprocessed dataframes with feed data
-
-    Returns:
-    - Plotly figure object with dual y-axes
-    """
-    # Create figure with dual y-axes
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # Add trace for feed1
     fig.add_trace(
         go.Scatter(
-            x=df1["created_timestamp"],
-            y=df1["feature_value"],
-            name=feed1["display_name"],
-            line=dict(color="blue", width=2),
+            x=df1["created_timestamp"], y=df1["feature_value"], name=feed1["display_name"], line=dict(color="blue")
         ),
         secondary_y=False,
     )
 
-    # Add trace for feed2
     fig.add_trace(
         go.Scatter(
-            x=df2["created_timestamp"],
-            y=df2["feature_value"],
-            name=feed2["display_name"],
-            line=dict(color="red", width=2),
+            x=df2["created_timestamp"], y=df2["feature_value"], name=feed2["display_name"], line=dict(color="red")
         ),
         secondary_y=True,
     )
 
-    # Set titles and labels
-    fig.update_layout(
-        title_text="Correlation Analysis with Dual Y-Axes",
-        title_font_size=22,
-        hovermode="x unified",
-        plot_bgcolor="rgba(0,0,0,0.02)",
-        height=600,
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5, font=dict(size=14)),
-    )
-
-    # Set x-axis title
-    fig.update_xaxes(
-        title_text="Date & Time", title_font=dict(size=16), gridcolor="rgba(0,0,0,0.1)", tickfont=dict(size=14)
-    )
-
-    # Set y-axes titles
-    fig.update_yaxes(
-        title_text=f"<b>{feed1['feature_name']}</b>",
-        title_font=dict(color="blue", size=16),
-        tickfont=dict(color="blue", size=14),
-        gridcolor="rgba(0,0,0,0.1)",
-        secondary_y=False,
-    )
-
-    fig.update_yaxes(
-        title_text=f"<b>{feed2['feature_name']}</b>",
-        title_font=dict(color="red", size=16),
-        tickfont=dict(color="red", size=14),
-        gridcolor="rgba(0,0,0,0.1)",
-        secondary_y=True,
-    )
+    fig.update_layout(title_text="Correlation Analysis", hovermode="x unified")
+    fig.update_xaxes(title_text="Date & Time")
+    fig.update_yaxes(title_text=feed1["feature_name"], secondary_y=False)
+    fig.update_yaxes(title_text=feed2["feature_name"], secondary_y=True)
 
     return fig
 
 
 def calculate_correlation(df1, df2):
-    """
-    Calculate Pearson correlation coefficient between two feeds.
-
-    Parameters:
-    - df1, df2: Preprocessed dataframes with feed data
-
-    Returns:
-    - Correlation coefficient or None if calculation isn't possible
-    """
-    if df1 is None or df2 is None or df1.empty or df2.empty:
-        return None
-
-    # Create merged dataframe with aligned timestamps
-    # Both datasets might have different timestamps, so we need to align them
-    # We'll first convert them to series with timestamps as index
-    s1 = pd.Series(df1["feature_value"].values, index=df1["created_timestamp"])
-    s2 = pd.Series(df2["feature_value"].values, index=df2["created_timestamp"])
-
-    # Combine and resample to common frequency
-    combined = pd.concat([s1, s2], axis=1)
-    combined.columns = ["feed1", "feed2"]
-
-    # Drop rows with NaN values (timestamps that don't appear in both datasets)
-    combined = combined.dropna()
-
+    combined = pd.merge(df1, df2, on="created_timestamp", suffixes=("_1", "_2")).dropna()
     if len(combined) < 2:
         return None
-
-    # Calculate Pearson correlation
-    correlation = combined["feed1"].corr(combined["feed2"])
-
-    return correlation
+    return combined["feature_value_1"].corr(combined["feature_value_2"])

@@ -1,8 +1,11 @@
 import plotly.express as px
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 from utils.api_client import APIClient
+from utils.time_utils import (
+    TIME_WINDOW_ALL,    
+    filter_dataframe_by_time,
+)
 
 from config import NEGATIVE_SENTIMENT_THRESHOLD, POSITIVE_SENTIMENT_THRESHOLD, SENTIMENT_COLORS
 
@@ -119,30 +122,6 @@ def create_reddit_source_topic_plot(topic_sentiments, num_submissions, num_comme
     return topic_figs
 
 
-def _filter_by_time_window(df, time_window):
-    """Filter dataframe by time window."""
-    if df is None or df.empty or time_window == "all":
-        return df
-
-    if not pd.api.types.is_datetime64_any_dtype(df["created_timestamp"]):
-        df["created_timestamp"] = pd.to_datetime(df["created_timestamp"])
-
-    now = datetime.now()
-
-    if time_window == "hour":
-        cutoff = now - timedelta(hours=1)
-    elif time_window == "day":
-        cutoff = now - timedelta(days=1)
-    elif time_window == "week":
-        cutoff = now - timedelta(weeks=1)
-    elif time_window == "month":
-        cutoff = now - timedelta(days=30)
-    else:
-        return df
-
-    return df[df["created_timestamp"] >= cutoff]
-
-
 def _create_common_layout(title, axis_labels=None):
     """
     Create a common layout configuration for plots.
@@ -180,7 +159,7 @@ def _create_common_layout(title, axis_labels=None):
     return layout
 
 
-def create_one_feature_plot(universe_name, source, topic, feature_name, time_window="all"):
+def create_one_feature_plot(universe_name, source, topic, feature_name, time_window=TIME_WINDOW_ALL):
     """
     Create a plot showing feature values over time from the feed data.
     """
@@ -202,7 +181,7 @@ def create_one_feature_plot(universe_name, source, topic, feature_name, time_win
             print(f"No data available for {topic_display} {feature_name} from {source}")
             return None, None
 
-        df = _filter_by_time_window(df, time_window)
+        df = filter_dataframe_by_time(df, time_window)
 
         if df.empty:
             print(f"No data available for the selected time window: {time_window}")
