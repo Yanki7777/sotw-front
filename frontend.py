@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from api_client import APIClient
-from ui.config_panel_ui import  configure_sidebar
+from ui.config_panel_ui import configure_sidebar
 from ui.reddit_source_ui import display_reddit_source
 from ui.alpha_source_ui import display_alpha_source
 from ui.universe_ui import display_universe
@@ -47,10 +47,29 @@ def streamlit_main():
 
     st.title(APP_TITLE)
 
+    # Track if correlation finder is active
+    if "show_correlation_finder" not in st.session_state:
+        st.session_state.show_correlation_finder = False
+
     # Add Karma button immediately after the app title
     karma_button = st.button("Karma", use_container_width=True)
     if karma_button:
         pass  # Add Karma functionality here if needed
+
+    # Add Correlation Finder button below Karma button
+    correlation_button = st.button("Correlation Finder", use_container_width=True)
+    if correlation_button:
+        st.session_state.show_correlation_finder = not st.session_state.show_correlation_finder
+
+    # Display correlation finder if active
+    if st.session_state.show_correlation_finder:
+        from ui.correlation_finder_ui import display_correlation_finder
+
+        display_correlation_finder()
+        # Add a button to close correlation finder
+        if st.button("Close Correlation Finder", use_container_width=True):
+            st.session_state.show_correlation_finder = False
+            st.rerun()
 
     # Configure sidebar component (returns dark_mode and selected_universe)
     dark_mode, selected_universe = configure_sidebar()
@@ -85,67 +104,85 @@ def streamlit_main():
             unsafe_allow_html=True,
         )
 
-    # Remove "Karma" from main_tabs
-    main_tabs = st.tabs(["Universe", "Topic", "Sources"])
+    # Keep track of which tab was last selected
+    if "active_main_tab" not in st.session_state:
+        st.session_state.active_main_tab = 0
 
+    # Create tabs with the active tab selected
+    tab_names = ["Universe", "Topic", "Sources"]
+    main_tabs = st.tabs(tab_names)
+
+    # Handle each tab separately
     with main_tabs[0]:
-        display_universe(universe)
+        if st.session_state.active_main_tab == 0:
+            display_universe(universe)
 
     with main_tabs[1]:
-        display_topic(universe)
+        if st.session_state.active_main_tab == 1:
+            display_topic(universe)
 
     with main_tabs[2]:
-        source_tabs = st.tabs(
-            ["REDDIT source", "ALPHA source", "NEWSAPI source", "FINLIGHT source", "GNEWS source", "METEO source"]
-        )
+        if st.session_state.active_main_tab == 2:
+            source_tabs = st.tabs(
+                ["REDDIT source", "ALPHA source", "NEWSAPI source", "FINLIGHT source", "GNEWS source", "METEO source"]
+            )
 
-        with source_tabs[0]:
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                fetch_reddit_button = st.button("Fetch REDDIT", use_container_width=True)
+            with source_tabs[0]:
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    fetch_reddit_button = st.button("Fetch REDDIT", use_container_width=True)
 
-            if fetch_reddit_button:
-                display_reddit_source(universe)
+                if fetch_reddit_button:
+                    display_reddit_source(universe)
 
-        with source_tabs[1]:
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                fetch_alpha_news_button = st.button("Fetch ALPHA News", use_container_width=True)
+            with source_tabs[1]:
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    fetch_alpha_news_button = st.button("Fetch ALPHA News", use_container_width=True)
 
-            if fetch_alpha_news_button:
-                display_alpha_source(universe)
+                if fetch_alpha_news_button:
+                    display_alpha_source(universe)
 
-        with source_tabs[2]:
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                fetch_newsapi_button = st.button("Fetch NEWSAPI", use_container_width=True)
+            with source_tabs[2]:
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    fetch_newsapi_button = st.button("Fetch NEWSAPI", use_container_width=True)
 
-            if fetch_newsapi_button:
-                display_newsapi_source(universe)
+                if fetch_newsapi_button:
+                    display_newsapi_source(universe)
 
-        with source_tabs[3]:
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                fetch_finlight_button = st.button("Fetch FINLIGHT", use_container_width=True)
+            with source_tabs[3]:
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    fetch_finlight_button = st.button("Fetch FINLIGHT", use_container_width=True)
 
-            if fetch_finlight_button:
-                display_finlight_source(universe)
+                if fetch_finlight_button:
+                    display_finlight_source(universe)
 
-        with source_tabs[4]:
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                fetch_gnews_button = st.button("Fetch GNEWS", use_container_width=True)
+            with source_tabs[4]:
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    fetch_gnews_button = st.button("Fetch GNEWS", use_container_width=True)
 
-            if fetch_gnews_button:
-                display_gnews_source(universe)
+                if fetch_gnews_button:
+                    display_gnews_source(universe)
 
-        with source_tabs[5]:
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                fetch_meteo_button = st.button("Fetch METEO", use_container_width=True)
+            with source_tabs[5]:
+                col1, col2 = st.columns([1, 5])
+                with col1:
+                    fetch_meteo_button = st.button("Fetch METEO", use_container_width=True)
 
-            if fetch_meteo_button:
-                display_meteo_source(universe)
+                if fetch_meteo_button:
+                    display_meteo_source(universe)
+
+    # Update active tab based on URL hash parameter
+    tab_hash = st.experimental_get_query_params().get("tab", [0])[0]
+    try:
+        tab_index = int(tab_hash)
+        if 0 <= tab_index < len(tab_names):
+            st.session_state.active_main_tab = tab_index
+    except ValueError:
+        pass
 
 
 if __name__ == "__main__":

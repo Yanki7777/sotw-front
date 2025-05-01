@@ -17,7 +17,7 @@ class APIClient:
             response = requests.get(f"{API_BASE_URL}/health")
             return response.json()
         except Exception as e:
-            return {"status": "ERROR", "message": str(e)}
+            return {"status": "ERROR", "db": f"ERROR: {str(e)}", "message": str(e)}
 
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes

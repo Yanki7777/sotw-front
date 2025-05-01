@@ -11,7 +11,23 @@ def configure_sidebar():
 
     print(f"API_BASE_URL: {API_BASE_URL}")
 
-    st.sidebar.text(f"Server URL: {API_BASE_URL}")
+    # Check API health status
+    health_status = APIClient.get_health_status()
+    db_status = health_status.get("db", "Unknown")
+
+    # Create status indicator color
+    status_color = "green" if db_status == "OK" else "red"
+
+    # Display API status with colored indicator
+    st.sidebar.markdown(
+        f"""
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background-color: {status_color};" title="{db_status}"></div>
+            <span>Server URL: {API_BASE_URL}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Universe selector
     universes = APIClient.get_all_universes()
