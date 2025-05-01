@@ -3,9 +3,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from plot_utils import create_one_feature_plot
-from api_client import APIClient
-from time_utils import filter_dataframe_by_time, parse_time_window
+from utils.plot_utils import create_one_feature_plot
+from utils.api_client import APIClient
+from utils.time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def display_universe(universe):
@@ -148,7 +148,6 @@ def get_available_sources(universe):
 
 
 def display_universe_plot(universe_name, selected_source, selected_feature, time_param, time_window):
-    print(f"Selected source: {selected_source}, feature: {selected_feature}, time_param: {time_param}")
     source_display = selected_source
     feature_display = selected_feature
 

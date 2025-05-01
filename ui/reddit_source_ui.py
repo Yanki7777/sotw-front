@@ -2,8 +2,8 @@
 
 import streamlit as st
 import numpy as np
-from plot_utils import create_reddit_source_sentiment_plot, create_reddit_source_topic_plot
-from api_client import APIClient
+from utils.plot_utils import create_reddit_source_sentiment_plot, create_reddit_source_topic_plot
+from utils.api_client import APIClient
 from config import (
     NEGATIVE_SENTIMENT_THRESHOLD,
     POSITIVE_SENTIMENT_THRESHOLD,

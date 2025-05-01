@@ -2,7 +2,7 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from api_client import APIClient
+from utils.api_client import APIClient
 
 from config import NEGATIVE_SENTIMENT_THRESHOLD, POSITIVE_SENTIMENT_THRESHOLD, SENTIMENT_COLORS
 

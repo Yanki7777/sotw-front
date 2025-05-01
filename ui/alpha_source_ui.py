@@ -2,7 +2,7 @@
 
 import streamlit as st
 import pandas as pd
-from api_client import APIClient
+from utils.api_client import APIClient
 
 
 def display_alpha_source(universe):

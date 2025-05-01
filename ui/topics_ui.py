@@ -2,9 +2,9 @@
 
 import streamlit as st
 import pandas as pd
-from plot_utils import create_one_feature_plot
-from api_client import APIClient
-from time_utils import filter_dataframe_by_time, parse_time_window
+from utils.plot_utils import create_one_feature_plot
+from utils.api_client import APIClient
+from utils.time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def get_feature_names_for_source(df, source):

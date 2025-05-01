@@ -5,8 +5,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from api_client import APIClient
-from time_utils import filter_dataframe_by_time, parse_time_window
+from utils.api_client import APIClient
+from utils.time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def display_correlation_finder():

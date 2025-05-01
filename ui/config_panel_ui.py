@@ -1,7 +1,7 @@
 """Configuration panel for the Reddit Sentiment Analysis app."""
 
 import streamlit as st
-from api_client import APIClient
+from utils.api_client import APIClient
 from config import API_BASE_URL
 # from datetime import datetime
 
@@ -9,7 +9,6 @@ from config import API_BASE_URL
 def configure_sidebar():
     """Configure the sidebar and return user inputs."""
 
-    print(f"API_BASE_URL: {API_BASE_URL}")
 
     # Check API health status
     health_status = APIClient.get_health_status()

@@ -3,7 +3,7 @@
 import streamlit as st
 from datetime import datetime
 
-from api_client import APIClient
+from utils.api_client import APIClient
 from config import APP_TITLE, APP_ICON
 from ui.config_panel_ui import configure_sidebar
 from ui.correlation_finder_ui import display_correlation_finder
