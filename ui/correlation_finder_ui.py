@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from utils.api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, parse_time_window
+from utils.time_utils import filter_dataframe_by_time, parse_time_window, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
 
 
 def display_correlation_finder():
@@ -51,13 +51,12 @@ def display_correlation_finder():
             feed2 = select_feed(2, universes)
 
         # Time window selection for the plot
-        time_options = ["All Time", "Last Hour", "Last Day", "Last Week", "Last Month"]
-        time_index = time_options.index("Last Day") if "Last Day" in time_options else 0
+        time_index = TIME_WINDOW_OPTIONS.index(TIME_WINDOW_DAY) if TIME_WINDOW_DAY in TIME_WINDOW_OPTIONS else 0
         if "correlation_time_window" not in st.session_state:
-            st.session_state.correlation_time_window = time_options[time_index]
+            st.session_state.correlation_time_window = TIME_WINDOW_OPTIONS[time_index]
 
         time_window = st.selectbox(
-            "Select Time Window:", time_options, index=time_index, key="correlation_time_selector"
+            "Select Time Window:", TIME_WINDOW_OPTIONS, index=time_index, key="correlation_time_selector"
         )
         st.session_state.correlation_time_window = time_window
 

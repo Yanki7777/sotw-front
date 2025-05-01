@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import parse_time_window
+from utils.time_utils import parse_time_window, TIME_WINDOW_OPTIONS, TIME_WINDOW_ALL
 
 
 def display_universe(universe):
@@ -50,7 +50,7 @@ def display_universe(universe):
             st.session_state.universe_selected_feature = features[0] if features else None
 
         if "universe_time_window" not in st.session_state:
-            st.session_state.universe_time_window = "All Time"
+            st.session_state.universe_time_window = TIME_WINDOW_ALL
 
         col1, col2, col3 = st.columns([1, 1, 1])
 
@@ -83,11 +83,10 @@ def display_universe(universe):
             st.session_state.universe_selected_feature = selected_feature
 
         with col3:
-            time_options = ["All Time", "Last Hour", "Last Day", "Last Week", "Last Month"]
             time_window = st.selectbox(
                 "Time Window:",
-                time_options,
-                index=time_options.index(st.session_state.universe_time_window),
+                TIME_WINDOW_OPTIONS,
+                index=TIME_WINDOW_OPTIONS.index(st.session_state.universe_time_window),
                 key="feature_time_selector",
             )
             st.session_state.universe_time_window = time_window

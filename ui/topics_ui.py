@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, parse_time_window
+from utils.time_utils import filter_dataframe_by_time, parse_time_window, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
 
 
 def get_feature_names_for_source(df, source):
@@ -99,14 +99,12 @@ def display_topic(universe):
             with time_col:
                 # Initialize time window if not in session state
                 if "topic_time_window" not in st.session_state:
-                    st.session_state.topic_time_window = "Last Day"
+                    st.session_state.topic_time_window = TIME_WINDOW_DAY
 
                 time_window = st.selectbox(
                     "Time Window:",
-                    ["All Time", "Last Hour", "Last Day", "Last Week", "Last Month"],
-                    index=["All Time", "Last Hour", "Last Day", "Last Week", "Last Month"].index(
-                        st.session_state.topic_time_window
-                    ),
+                    TIME_WINDOW_OPTIONS,
+                    index=TIME_WINDOW_OPTIONS.index(st.session_state.topic_time_window),
                     key="topic_analysis_time_selector",
                 )
                 st.session_state.topic_time_window = time_window
@@ -128,7 +126,9 @@ def display_topic(universe):
                     else pd.DataFrame()
                 )
                 data_points = []
-                for source in ["fmp", "reddit", "newsapi", "alpha"]:
+                # Get unique sources dynamically from the data
+                sources = topic_data["source"].unique().tolist() if not topic_data.empty else []
+                for source in sources:
                     source_data = topic_data[topic_data["source"] == source] if not topic_data.empty else pd.DataFrame()
                     if not source_data.empty:
                         source_count = len(source_data)

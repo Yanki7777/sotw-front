@@ -3,6 +3,16 @@
 import pandas as pd
 from datetime import datetime, timedelta
 
+# Time window constants
+TIME_WINDOW_ALL = "All Time"
+TIME_WINDOW_HOUR = "Last Hour"
+TIME_WINDOW_DAY = "Last Day"
+TIME_WINDOW_WEEK = "Last Week"
+TIME_WINDOW_MONTH = "Last Month"
+
+# List of all available time windows in display order
+TIME_WINDOW_OPTIONS = [TIME_WINDOW_ALL, TIME_WINDOW_HOUR, TIME_WINDOW_DAY, TIME_WINDOW_WEEK, TIME_WINDOW_MONTH]
+
 
 def filter_dataframe_by_time(df, time_window):
     """
@@ -59,6 +69,11 @@ def parse_time_window(time_window_str):
     Returns:
     - Time parameter string ('all', 'hour', 'day', 'week', 'month')
     """
-    return {"Last Hour": "hour", "Last Day": "day", "Last Week": "week", "Last Month": "month"}.get(
-        time_window_str, "all"
-    )
+    mapping = {
+        TIME_WINDOW_ALL: "all",
+        TIME_WINDOW_HOUR: "hour",
+        TIME_WINDOW_DAY: "day",
+        TIME_WINDOW_WEEK: "week",
+        TIME_WINDOW_MONTH: "month",
+    }
+    return mapping.get(time_window_str, "all")
