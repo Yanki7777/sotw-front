@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 from plot_utils import create_one_feature_plot
 from api_client import APIClient
+from utils.time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def get_feature_names_for_source(df, source):
@@ -11,27 +12,6 @@ def get_feature_names_for_source(df, source):
     if df is None or df.empty:
         return []
     return df[df["source"] == source]["feature_name"].unique().tolist()
-
-
-def filter_dataframe_by_time(df, time_window):
-    """Filter dataframe based on time window."""
-    if df is None or df.empty:
-        return df
-
-    now = pd.Timestamp.now()
-
-    if time_window == "hour":
-        cutoff = now - pd.Timedelta(hours=1)
-    elif time_window == "day":
-        cutoff = now - pd.Timedelta(days=1)
-    elif time_window == "week":
-        cutoff = now - pd.Timedelta(weeks=1)
-    elif time_window == "month":
-        cutoff = now - pd.Timedelta(days=30)
-    else:
-        return df
-
-    return df[df["original_timestamp"] >= cutoff]
 
 
 def display_topic(universe):
@@ -160,9 +140,7 @@ def display_topic(universe):
                 st.write("")
                 st.caption(f"<span style='font-size:15px;'>{data_summary}</span>", unsafe_allow_html=True)
 
-        time_param = {"Last Hour": "hour", "Last Day": "day", "Last Week": "week", "Last Month": "month"}.get(
-            time_window, "all"
-        )
+        time_param = parse_time_window(time_window)
 
         if all_feed_data is None or all_feed_data.empty:
             st.warning("No feed data available. Please make sure you've collected data.")
@@ -240,18 +218,7 @@ def display_topic(universe):
                 topic_data = all_feed_data[all_feed_data["topic"] == selected_topic]
                 if not topic_data.empty:
                     if time_param != "all":
-                        from datetime import datetime, timedelta
-
-                        now = datetime.now()
-                        if time_param == "hour":
-                            cutoff = now - timedelta(hours=1)
-                        elif time_param == "day":
-                            cutoff = now - timedelta(days=1)
-                        elif time_param == "week":
-                            cutoff = now - timedelta(weeks=1)
-                        elif time_param == "month":
-                            cutoff = now - timedelta(days=30)
-                        topic_data = topic_data[topic_data["created_timestamp"] >= cutoff]
+                        topic_data = filter_dataframe_by_time(topic_data, time_param)
                     topic_data = topic_data.sort_values("original_timestamp", ascending=False)
                     st.dataframe(topic_data, use_container_width=True, height=300)
                 else:

@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from api_client import APIClient
+from utils.time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def display_correlation_finder():
@@ -61,19 +62,20 @@ def display_correlation_finder():
         )
         st.session_state.correlation_time_window = time_window
 
-        time_param = {"Last Hour": "hour", "Last Day": "day", "Last Week": "week", "Last Month": "month"}.get(
-            time_window, "all"
-        )
+        time_param = parse_time_window(time_window)
 
         # Generate correlation plot button
         if st.button("Generate Correlation Plot", type="primary", use_container_width=True, key="corr_gen_button"):
             if feed1 is not None and feed2 is not None:
                 with st.spinner("Generating correlation plot..."):
-                    fig = create_dual_axis_plot(feed1, feed2, time_param)
-                    if fig:
+                    # Load both feed data sets at once to avoid redundant API calls
+                    df1, df2 = get_correlation_data(feed1, feed2, time_param)
+
+                    if df1 is not None and df2 is not None and not df1.empty and not df2.empty:
+                        fig = create_dual_axis_plot(feed1, feed2, df1, df2)
+                        corr_value = calculate_correlation(df1, df2)
+
                         st.session_state.correlation_plot_data = fig
-                        # Calculate correlation coefficient
-                        corr_value = calculate_correlation(feed1, feed2, time_param)
                         st.session_state.correlation_value = corr_value
                     else:
                         st.warning("Could not generate plot. Please check that both feeds have valid numeric data.")
@@ -180,25 +182,66 @@ def reset_selections(prefix, level):
     st.session_state.correlation_value = None
 
 
-def create_dual_axis_plot(feed1, feed2, time_window="all"):
+def get_correlation_data(feed1, feed2, time_window):
+    """
+    Load data for both feeds at once to reduce redundant API calls.
+
+    Returns:
+    - Tuple of (df1, df2) containing processed dataframes ready for correlation
+    """
+    if feed1 is None or feed2 is None:
+        return None, None
+
+    # Get data for both feeds
+    df1 = APIClient.get_feed_from_db(
+        source=feed1["source"],
+        topic=feed1["topic"],
+        feature_name=feed1["feature_name"],
+        universe_name=feed1["universe_name"],
+    )
+
+    df2 = APIClient.get_feed_from_db(
+        source=feed2["source"],
+        topic=feed2["topic"],
+        feature_name=feed2["feature_name"],
+        universe_name=feed2["universe_name"],
+    )
+
+    if df1 is None or df2 is None or df1.empty or df2.empty:
+        return None, None
+
+    # Filter by time window
+    df1 = filter_dataframe_by_time(df1, time_window)
+    df2 = filter_dataframe_by_time(df2, time_window)
+
+    if df1 is None or df2 is None or df1.empty or df2.empty:
+        return None, None
+
+    # Convert values to numeric
+    try:
+        df1["feature_value"] = pd.to_numeric(df1["feature_value"])
+        df2["feature_value"] = pd.to_numeric(df2["feature_value"])
+    except (ValueError, TypeError):
+        return None, None
+
+    # Sort by timestamp
+    df1 = df1.sort_values("created_timestamp")
+    df2 = df2.sort_values("created_timestamp")
+
+    return df1, df2
+
+
+def create_dual_axis_plot(feed1, feed2, df1, df2):
     """
     Creates a plot with dual y-axes for comparing two different feeds over time.
 
     Parameters:
-    - feed1: Dictionary with 'universe_name', 'topic', 'source', 'feature_name'
-    - feed2: Dictionary with 'universe_name', 'topic', 'source', 'feature_name'
-    - time_window: Time window to filter data ('all', 'hour', 'day', 'week', 'month')
+    - feed1, feed2: Feed selection dictionaries
+    - df1, df2: Preprocessed dataframes with feed data
 
     Returns:
     - Plotly figure object with dual y-axes
     """
-    # Get data for both feeds
-    df1 = get_feed_data(feed1, time_window)
-    df2 = get_feed_data(feed2, time_window)
-
-    if df1 is None or df2 is None or df1.empty or df2.empty:
-        return None
-
     # Create figure with dual y-axes
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -259,75 +302,16 @@ def create_dual_axis_plot(feed1, feed2, time_window="all"):
     return fig
 
 
-def get_feed_data(feed, time_window="all"):
-    """
-    Get data for a feed with filtering by time window.
-
-    Parameters:
-    - feed: Dictionary with 'universe_name', 'topic', 'source', 'feature_name'
-    - time_window: Time window to filter data ('all', 'hour', 'day', 'week', 'month')
-
-    Returns:
-    - DataFrame with feed data or None
-    """
-    if feed is None:
-        return None
-
-    df = APIClient.get_feed_from_db(
-        source=feed["source"],
-        topic=feed["topic"],
-        feature_name=feed["feature_name"],
-        universe_name=feed["universe_name"],
-    )
-
-    if df is None or df.empty:
-        return None
-
-    # Filter by time window
-    if time_window != "all":
-        from datetime import datetime, timedelta
-
-        now = datetime.now()
-        if time_window == "hour":
-            cutoff = now - timedelta(hours=1)
-        elif time_window == "day":
-            cutoff = now - timedelta(days=1)
-        elif time_window == "week":
-            cutoff = now - timedelta(weeks=1)
-        elif time_window == "month":
-            cutoff = now - timedelta(days=30)
-
-        # Make sure created_timestamp is datetime
-        if not pd.api.types.is_datetime64_any_dtype(df["created_timestamp"]):
-            df["created_timestamp"] = pd.to_datetime(df["created_timestamp"])
-
-        df = df[df["created_timestamp"] >= cutoff]
-
-    if df.empty:
-        return None
-
-    # Convert values to numeric
-    try:
-        df["feature_value"] = pd.to_numeric(df["feature_value"])
-    except (ValueError, TypeError):
-        return None
-
-    # Sort by timestamp
-    df = df.sort_values("created_timestamp")
-
-    return df
-
-
-def calculate_correlation(feed1, feed2, time_window="all"):
+def calculate_correlation(df1, df2):
     """
     Calculate Pearson correlation coefficient between two feeds.
+
+    Parameters:
+    - df1, df2: Preprocessed dataframes with feed data
 
     Returns:
     - Correlation coefficient or None if calculation isn't possible
     """
-    df1 = get_feed_data(feed1, time_window)
-    df2 = get_feed_data(feed2, time_window)
-
     if df1 is None or df2 is None or df1.empty or df2.empty:
         return None
 

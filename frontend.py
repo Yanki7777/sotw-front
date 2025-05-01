@@ -127,56 +127,25 @@ def streamlit_main():
                 ["REDDIT source", "ALPHA source", "NEWSAPI source", "FINLIGHT source", "GNEWS source", "METEO source"]
             )
 
-            with source_tabs[0]:
-                col1, col2 = st.columns([1, 5])
-                with col1:
-                    fetch_reddit_button = st.button("Fetch REDDIT", use_container_width=True)
+            # Extract the repeated source display pattern into a function
+            def display_source_tab(tab_index, source_name, display_function):
+                with source_tabs[tab_index]:
+                    col1, col2 = st.columns([1, 5])
+                    with col1:
+                        fetch_button = st.button(f"Fetch {source_name}", use_container_width=True)
+                    if fetch_button:
+                        display_function(universe)
 
-                if fetch_reddit_button:
-                    display_reddit_source(universe)
-
-            with source_tabs[1]:
-                col1, col2 = st.columns([1, 5])
-                with col1:
-                    fetch_alpha_news_button = st.button("Fetch ALPHA News", use_container_width=True)
-
-                if fetch_alpha_news_button:
-                    display_alpha_source(universe)
-
-            with source_tabs[2]:
-                col1, col2 = st.columns([1, 5])
-                with col1:
-                    fetch_newsapi_button = st.button("Fetch NEWSAPI", use_container_width=True)
-
-                if fetch_newsapi_button:
-                    display_newsapi_source(universe)
-
-            with source_tabs[3]:
-                col1, col2 = st.columns([1, 5])
-                with col1:
-                    fetch_finlight_button = st.button("Fetch FINLIGHT", use_container_width=True)
-
-                if fetch_finlight_button:
-                    display_finlight_source(universe)
-
-            with source_tabs[4]:
-                col1, col2 = st.columns([1, 5])
-                with col1:
-                    fetch_gnews_button = st.button("Fetch GNEWS", use_container_width=True)
-
-                if fetch_gnews_button:
-                    display_gnews_source(universe)
-
-            with source_tabs[5]:
-                col1, col2 = st.columns([1, 5])
-                with col1:
-                    fetch_meteo_button = st.button("Fetch METEO", use_container_width=True)
-
-                if fetch_meteo_button:
-                    display_meteo_source(universe)
+            # Use the new function for each source tab
+            display_source_tab(0, "REDDIT", display_reddit_source)
+            display_source_tab(1, "ALPHA News", display_alpha_source)
+            display_source_tab(2, "NEWSAPI", display_newsapi_source)
+            display_source_tab(3, "FINLIGHT", display_finlight_source)
+            display_source_tab(4, "GNEWS", display_gnews_source)
+            display_source_tab(5, "METEO", display_meteo_source)
 
     # Update active tab based on URL hash parameter
-    tab_hash = st.experimental_get_query_params().get("tab", [0])[0]
+    tab_hash = st.query_params.get("tab", [0])[0]
     try:
         tab_index = int(tab_hash)
         if 0 <= tab_index < len(tab_names):

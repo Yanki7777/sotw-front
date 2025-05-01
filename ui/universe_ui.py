@@ -5,91 +5,7 @@ import pandas as pd
 from datetime import datetime
 from plot_utils import create_one_feature_plot
 from api_client import APIClient
-
-
-def filter_feed_by_time(df, time_param):
-    """Filter the feed dataframe by the specified time window"""
-    if df is None or df.empty:
-        return None
-
-    if time_param == "all":
-        return df
-
-    now = datetime.now()
-
-    if time_param == "hour":
-        cutoff = now - pd.Timedelta(hours=1)
-    elif time_param == "day":
-        cutoff = now - pd.Timedelta(days=1)
-    elif time_param == "week":
-        cutoff = now - pd.Timedelta(weeks=1)
-    elif time_param == "month":
-        cutoff = now - pd.Timedelta(days=30)
-    else:
-        return df
-
-    return df[df["created_timestamp"] >= cutoff]
-
-
-def get_available_sources(universe):
-    """Get available sources and their features from feed data"""
-    try:
-        df = APIClient.get_feed_from_db(universe_name=universe.get("universe_name"))
-        if df is None or df.empty:
-            return [], {}
-        sources = sorted(df["source"].unique().tolist())
-        features_by_source = {
-            source: sorted(df[df["source"] == source]["feature_name"].unique().tolist()) for source in sources
-        }
-        return sources, features_by_source
-    except Exception as e:
-        print(f"Error getting available options: {e}")
-        return [], {}
-
-
-def display_universe_plot(universe_name, selected_source, selected_feature, time_param, time_window):
-    print(f"Selected source: {selected_source}, feature: {selected_feature}, time_param: {time_param}")
-    source_display = selected_source
-    feature_display = selected_feature
-
-    # Get the universe object (from session or fallback to None)
-    universe = None
-    if "universes" in st.session_state:
-        universe = next((u for u in st.session_state["universes"] if u.get("universe_name") == universe_name), None)
-
-    # Use get_topic_description to get the description for the selected feature
-    if universe and selected_feature:
-        desc = APIClient.get_topic_description(universe, selected_feature)
-        if desc:
-            topic_display = f"{selected_feature} ({desc})"
-        else:
-            topic_display = selected_feature
-    else:
-        topic_display = feature_display
-
-    with st.spinner(f"Loading {feature_display} data from {source_display}..."):
-        feature_plot_result = create_one_feature_plot(
-            universe_name,
-            selected_source,
-            None,
-            selected_feature,
-            time_param,
-        )
-        if isinstance(feature_plot_result, tuple) and len(feature_plot_result) == 2:
-            feature_plot, plot_key = feature_plot_result
-        else:
-            feature_plot = feature_plot_result
-            plot_key = f"{selected_source}_all_{selected_feature}_{time_param}"
-
-        if feature_plot is not None:
-            st.plotly_chart(feature_plot, use_container_width=True, key=plot_key)
-        else:
-            display_name = topic_display if topic_display else feature_display
-            st.warning(
-                f"No data available for {display_name} from {source_display} for {time_window.lower()}."
-                if time_window != "All Time"
-                else f"No data available for {display_name} from {source_display}."
-            )
+from utils.time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def display_universe(universe):
@@ -177,9 +93,7 @@ def display_universe(universe):
             )
             st.session_state.universe_time_window = time_window
 
-        time_param = {"Last Hour": "hour", "Last Day": "day", "Last Week": "week", "Last Month": "month"}.get(
-            time_window, "all"
-        )
+        time_param = parse_time_window(time_window)
 
         last_update = None
         if available_features and selected_feature != "No features available":
@@ -215,6 +129,67 @@ def display_universe(universe):
             )
         else:
             st.info("Please select a data source and feature to view the data.")
+
+
+def get_available_sources(universe):
+    """Get available sources and their features from feed data"""
+    try:
+        df = APIClient.get_feed_from_db(universe_name=universe.get("universe_name"))
+        if df is None or df.empty:
+            return [], {}
+        sources = sorted(df["source"].unique().tolist())
+        features_by_source = {
+            source: sorted(df[df["source"] == source]["feature_name"].unique().tolist()) for source in sources
+        }
+        return sources, features_by_source
+    except Exception as e:
+        print(f"Error getting available options: {e}")
+        return [], {}
+
+
+def display_universe_plot(universe_name, selected_source, selected_feature, time_param, time_window):
+    print(f"Selected source: {selected_source}, feature: {selected_feature}, time_param: {time_param}")
+    source_display = selected_source
+    feature_display = selected_feature
+
+    # Get the universe object (from session or fallback to None)
+    universe = None
+    if "universes" in st.session_state:
+        universe = next((u for u in st.session_state["universes"] if u.get("universe_name") == universe_name), None)
+
+    # Use get_topic_description to get the description for the selected feature
+    if universe and selected_feature:
+        desc = APIClient.get_topic_description(universe, selected_feature)
+        if desc:
+            topic_display = f"{selected_feature} ({desc})"
+        else:
+            topic_display = selected_feature
+    else:
+        topic_display = feature_display
+
+    with st.spinner(f"Loading {feature_display} data from {source_display}..."):
+        feature_plot_result = create_one_feature_plot(
+            universe_name,
+            selected_source,
+            None,
+            selected_feature,
+            time_param,
+        )
+        if isinstance(feature_plot_result, tuple) and len(feature_plot_result) == 2:
+            feature_plot, plot_key = feature_plot_result
+        else:
+            feature_plot = feature_plot_result
+            plot_key = f"{selected_source}_all_{selected_feature}_{time_param}"
+
+        if feature_plot is not None:
+            st.plotly_chart(feature_plot, use_container_width=True, key=plot_key)
+        else:
+            display_name = topic_display if topic_display else feature_display
+            st.warning(
+                f"No data available for {display_name} from {source_display} for {time_window.lower()}."
+                if time_window != "All Time"
+                else f"No data available for {display_name} from {source_display}."
+            )
 
 
 def source_changed():
