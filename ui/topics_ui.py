@@ -89,11 +89,8 @@ def display_topic(universe):
                 else 0,
                 key="selected_topic_display",
             )
-            # Update session state with the actual topic name
-            topic_changed = False
             if display_to_topic[selected_display_topic] != prev_selected_topic:
-                topic_changed = True
-            st.session_state.selected_topic = display_to_topic[selected_display_topic]
+                st.session_state.selected_topic = display_to_topic[selected_display_topic]
             selected_topic = st.session_state.selected_topic
 
         with col2:
@@ -122,7 +119,7 @@ def display_topic(universe):
                     st.session_state["topic_data_refreshed"] = True
 
                 st.write("")
-                refresh_button = st.button("🔄", help="Refresh data", key="topic_refresh_button", on_click=refresh_data)
+                st.button("🔄", help="Refresh data", key="topic_refresh_button", on_click=refresh_data)
 
             with info_col:
                 topic_data = (

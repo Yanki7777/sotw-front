@@ -1,7 +1,6 @@
-"""Optimized SOTW Streamlit UI"""
+"""SOTW Streamlit UI"""
 
 import streamlit as st
-from datetime import datetime
 
 from utils.api_client import APIClient
 from config import APP_TITLE, APP_ICON

@@ -2,7 +2,6 @@
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from utils.api_client import APIClient

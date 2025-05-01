@@ -2,10 +2,9 @@
 
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, parse_time_window
+from utils.time_utils import parse_time_window
 
 
 def display_universe(universe):
