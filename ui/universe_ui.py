@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 from plot_utils import create_one_feature_plot
 from api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, parse_time_window
+from time_utils import filter_dataframe_by_time, parse_time_window
 
 
 def display_universe(universe):
