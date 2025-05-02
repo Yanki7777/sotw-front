@@ -18,13 +18,58 @@ def display_topic(universe):
     # Use a container to isolate this component
     topic_container = st.container()
 
+    # ---- prepare data ----
+    all_feed_data = APIClient.get_feed_from_db(universe_name=universe.get("universe_name"))
+    available_topics = sorted(all_feed_data["topic"].unique().tolist()) if all_feed_data is not None else []
+
+    def topic_display_name(topic):
+        desc = APIClient.get_topic_description(universe, topic)
+        if desc:
+            return f"{topic} ({desc})"
+        return topic
+
+    ## ---- UI ----
     with topic_container:
         if st.session_state.get("refresh_topic_dashboard", False):
             st.session_state["refresh_topic_dashboard"] = False
             # Create a container-specific rerun indicator instead of a full page rerun
             st.session_state["topic_data_refreshed"] = True
 
-        st.header("🔍 Topic Analysis Dashboard")
+        # Render header, refresh button, and data summary all in one line
+        header_col, refresh_col, summary_col = st.columns([1.5, 0.2, 3.3])
+
+        with header_col:
+            st.header("🔍 Topic Analysis Dashboard")
+
+        with refresh_col:
+
+            def refresh_data():
+                # Clear cache but don't trigger full page rerun
+                st.cache_data.clear()
+                st.session_state["topic_data_refreshed"] = True
+
+            st.button("🔄", help="Refresh data", key="topic_refresh_button", on_click=refresh_data)
+
+        with summary_col:
+            selected_topic = st.session_state.get(
+                "selected_topic",
+                "AAPL" if "AAPL" in available_topics else (available_topics[0] if available_topics else None),
+            )
+            topic_data = (
+                all_feed_data[all_feed_data["topic"] == selected_topic]
+                if all_feed_data is not None and selected_topic is not None
+                else pd.DataFrame()
+            )
+            data_points = []
+            # Get unique sources dynamically from the data
+            sources = topic_data["source"].unique().tolist() if not topic_data.empty else []
+            for source in sources:
+                source_data = topic_data[topic_data["source"] == source] if not topic_data.empty else pd.DataFrame()
+                if not source_data.empty:
+                    source_count = len(source_data)
+                    data_points.append(f"{source_count} {source}")
+            data_summary = " | ".join(data_points) if data_points else "No data available"
+            st.caption(f"<span style='font-size:15px;'>{data_summary}</span>", unsafe_allow_html=True)
 
         st.markdown(
             """
@@ -42,15 +87,6 @@ def display_topic(universe):
         """,
             unsafe_allow_html=True,
         )
-
-        all_feed_data = APIClient.get_feed_from_db(universe_name=universe.get("universe_name"))
-        available_topics = sorted(all_feed_data["topic"].unique().tolist()) if all_feed_data is not None else []
-
-        def topic_display_name(topic):
-            desc = APIClient.get_topic_description(universe, topic)
-            if desc:
-                return f"{topic} ({desc})"
-            return topic
 
         # Map available_topics to display names for selectbox
         topic_display_map = {topic: topic_display_name(topic) for topic in available_topics}
@@ -94,7 +130,7 @@ def display_topic(universe):
             selected_topic = st.session_state.selected_topic
 
         with col2:
-            time_col, refresh_col, info_col = st.columns([1, 0.2, 2.8])
+            time_col = st.columns([1])[0]
 
             with time_col:
                 # Initialize time window if not in session state
@@ -115,35 +151,6 @@ def display_topic(universe):
                     key="topic_analysis_time_selector",
                     on_change=on_topic_time_window_change,
                 )
-               
-
-            with refresh_col:
-
-                def refresh_data():
-                    # Clear cache but don't trigger full page rerun
-                    st.cache_data.clear()
-                    st.session_state["topic_data_refreshed"] = True
-
-                st.write("")
-                st.button("🔄", help="Refresh data", key="topic_refresh_button", on_click=refresh_data)
-
-            with info_col:
-                topic_data = (
-                    all_feed_data[all_feed_data["topic"] == selected_topic]
-                    if all_feed_data is not None
-                    else pd.DataFrame()
-                )
-                data_points = []
-                # Get unique sources dynamically from the data
-                sources = topic_data["source"].unique().tolist() if not topic_data.empty else []
-                for source in sources:
-                    source_data = topic_data[topic_data["source"] == source] if not topic_data.empty else pd.DataFrame()
-                    if not source_data.empty:
-                        source_count = len(source_data)
-                        data_points.append(f"{source_count} {source}")
-                data_summary = " | ".join(data_points) if data_points else "No data available"
-                st.write("")
-                st.caption(f"<span style='font-size:15px;'>{data_summary}</span>", unsafe_allow_html=True)
 
         time_param = st.session_state.topic_time_window  # Use session state value directly
 
