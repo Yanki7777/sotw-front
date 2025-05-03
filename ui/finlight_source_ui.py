@@ -80,10 +80,16 @@ def display_finlight_source(universe):
         )
 
     st.markdown("---")
+
+    # Topic selection menu
+    topics_available = list(all_topic_news.keys())
+    selected_topic = st.selectbox("Select Topic to Display Articles", ["All"] + topics_available)
+
     st.header("News Articles")
 
-    # Display articles
-    for topic, news_items in all_topic_news.items():
+    topics_to_display = topics_available if selected_topic == "All" else [selected_topic]
+
+    for topic, news_items in {k: v for k, v in all_topic_news.items() if k in topics_to_display}.items():
         if not news_items:
             continue
 
@@ -104,8 +110,8 @@ def display_finlight_source(universe):
 
                 images = item.get("images", [])
                 if images:
-                    # Create columns for left alignment with 90% width
-                    img_col, img_space = st.columns([0.9, 0.1])
+                    # Create inner columns to control image width to 90%
+                    img_space1, img_col, img_space2 = st.columns([0.05, 0.9, 0.05])
                     with img_col:
                         st.image(images[0], use_container_width=True)
 
