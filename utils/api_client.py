@@ -175,14 +175,17 @@ class APIClient:
             data = response.json()
             return (
                 data.get("all_news", {}),
-                data.get("topic_averages", {}),
+                data.get("topic_sentiments", {}),
                 data.get("overall_sentiment_average", 0),
+                data.get("topic_finlight_sentiments", {}),
+                data.get("overall_finlight_sentiment_average", 0),
                 data.get("latest_articles", {}),
                 data.get("article_counts", {}),
             )
         except Exception as e:
             print(f"Error processing Finlight feed: {e}")
-            return {}, {}, 0, {}, {}
+            return {}, {}, 0, {}, 0, {}, {}
+
 
     @staticmethod
     def process_reddit_feed(universe):
