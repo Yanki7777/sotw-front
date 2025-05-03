@@ -174,9 +174,7 @@ class APIClient:
             response = requests.post(f"{API_BASE_URL}/feed/finlight", json=universe)
             data = response.json()
             return (
-                data.get("all_news", {}),
-                data.get("topic_sentiments", {}),
-                data.get("overall_sentiment_average", 0),
+                data.get("all_news", {}),                
                 data.get("topic_finlight_sentiments", {}),
                 data.get("overall_finlight_sentiment_average", 0),
                 data.get("latest_articles", {}),
@@ -184,7 +182,7 @@ class APIClient:
             )
         except Exception as e:
             print(f"Error processing Finlight feed: {e}")
-            return {}, {}, 0, {}, 0, {}, {}
+            return {}, {}, 0, {}, {}
 
 
     @staticmethod

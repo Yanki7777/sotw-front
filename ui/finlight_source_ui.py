@@ -12,8 +12,6 @@ def display_finlight_source(universe):
     with st.spinner(f"Fetching Finlight data for {len(universe.get('topics', []))} topic(s)..."):
         (
             all_topic_news,
-            topic_sentiments,
-            overall_sentiment_average,
             topic_finlight_sentiments,
             overall_finlight_sentiment_average,
             latest_articles,
@@ -21,42 +19,43 @@ def display_finlight_source(universe):
         ) = APIClient.process_finlight_feed(universe)
 
     print(
-        f"FINLIGHT data summary: {len(all_topic_news)} topics, {len(topic_sentiments)} sentiment entries analyzed."
+        f"FINLIGHT data summary: {len(all_topic_news)} topics, {len(topic_finlight_sentiments)} sentiment entries analyzed."
     )
 
     if not any(all_topic_news.values()):
         st.warning("No news data found for the selected topics.")
         return
 
-    st.header("Finlight Sentiment Analysis")
+    st.header("Finlight Source")
 
-    # Overall sentiment
-    sentiment_color = "green" if overall_sentiment_average > 0 else "red" if overall_sentiment_average < 0 else "black"
-    st.markdown(
-        f"<h3 style='color:{sentiment_color}'>Overall Sentiment: {overall_sentiment_average:.4f}</h3>",
-        unsafe_allow_html=True,
-    )
-
-    # Overall Finlight-specific sentiment
     finlight_color = (
-        "green" if overall_finlight_sentiment_average > 0 else "red" if overall_finlight_sentiment_average < 0 else "black"
+        "green"
+        if overall_finlight_sentiment_average > 0
+        else "red"
+        if overall_finlight_sentiment_average < 0
+        else "black"
     )
     st.markdown(
-        f"<h4 style='color:{finlight_color}'>Overall Finlight Sentiment: {overall_finlight_sentiment_average:.4f}</h4>",
+        f"<h4 style='color:{finlight_color}'>Overall Sentiment: {overall_finlight_sentiment_average:.4f}</h4>",
         unsafe_allow_html=True,
     )
 
     # Create dataframe for topic sentiments
     topic_data = []
-    for topic, avg in topic_sentiments.items():
-        finlight_avg = topic_finlight_sentiments.get(topic, 0)
-        latest_date = latest_articles.get(topic, {}).get("published_date", "")
+    for topic, sent in topic_finlight_sentiments.items():
+        # More robust error handling for latest_articles
+        try:
+            if latest_articles and topic in latest_articles and latest_articles[topic]:
+                latest_date = latest_articles[topic].get("published_date", "")
+            else:
+                latest_date = ""
+        except (AttributeError, TypeError):
+            latest_date = ""
 
         topic_data.append(
             {
                 "Topic": topic,
-                "Sentiment Score": avg,
-                "Finlight Sentiment": finlight_avg,
+                "Sentiment Score": sent,
                 "Articles": article_counts.get(topic, 0),
                 "Latest Article": latest_date,
             }
@@ -73,7 +72,6 @@ def display_finlight_source(universe):
 
         df_display = df.copy()
         df_display["Sentiment Score"] = df_display["Sentiment Score"].apply(color_sentiment)
-        df_display["Finlight Sentiment"] = df_display["Finlight Sentiment"].apply(color_sentiment)
 
         # Display with HTML
         st.write(
@@ -96,23 +94,25 @@ def display_finlight_source(universe):
 
             sentiment_score = float(item.get("sentiment", 0))
             sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
-            finlight_sentiment = float(item.get("finlight_sentiment", 0))
-            finlight_sentiment_color = "green" if finlight_sentiment > 0 else "red" if finlight_sentiment < 0 else "black"
 
             with col1:
                 st.markdown(f"<h3>{topic.upper()}</h3>", unsafe_allow_html=True)
                 st.markdown(
-                    f"<h4 style='color:{sentiment_color}'><b>Bert: {sentiment_score:.2f}</b></h4>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f"<h4 style='color:{finlight_sentiment_color}'><b>finlight: {finlight_sentiment:.2f}</b></h4>",
+                    f"<h4 style='color:{sentiment_color}'><b>Sentiment: {sentiment_score:.2f}</b></h4>",
                     unsafe_allow_html=True,
                 )
 
+                images = item.get("images", [])
+                if images:
+                    # Create columns for left alignment with 90% width
+                    img_col, img_space = st.columns([0.9, 0.1])
+                    with img_col:
+                        st.image(images[0], use_container_width=True)
+
             with col2:
                 st.markdown(f"### {item.get('title', '')}")
-                st.caption(f"Published: {item.get('published_date', '')}")
+                st.caption(f"**Published:** {item.get('published_date', '')}.  **Source:** {item.get('source', '')}")
+                st.caption(f"Link: {item.get('link', '')}")
                 content = item.get("content", "")[:600]
                 st.write(content + ("..." if len(content) == 600 else ""))
 
