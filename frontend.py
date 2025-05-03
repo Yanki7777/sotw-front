@@ -6,7 +6,7 @@ from utils.api_client import APIClient
 from config import APP_TITLE, APP_ICON
 from ui.config_panel_ui import configure_sidebar
 from ui.correlation_finder_ui import display_correlation_finder
-from ui.source_tabs_ui import display_source_tabs
+from ui.source_ui import display_source_fetch_buttons
 from ui.universe_ui import display_universe
 from ui.topics_ui import display_topic
 
@@ -134,7 +134,8 @@ def main():
     elif st.session_state.active_tab == "topic":
         display_topic(selected_universe)
     elif st.session_state.active_tab == "sources":
-        display_source_tabs(selected_universe)
+        display_source_fetch_buttons(selected_universe)
+
 
     # Handle URL query params for deep linking
     tab_query = st.query_params.get("tab", [None])[0]

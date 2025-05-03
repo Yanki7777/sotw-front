@@ -2,6 +2,7 @@
 
 import streamlit as st
 import numpy as np
+from datetime import datetime
 from utils.plot_utils import create_reddit_source_sentiment_plot, create_reddit_source_topic_plot
 from utils.api_client import APIClient
 from config import (
@@ -77,19 +78,30 @@ def display_overall_sentiment(results):
     st.plotly_chart(fig, use_container_width=True)
 
 
+
 def display_topic_sentiment(results):
     """Display topic-specific sentiment analysis."""
-    st.header("topic-Specific Sentiment")
+    st.header("Topic-Specific Sentiment")
     figs = create_reddit_source_topic_plot(
         results["topic_sentiments"], results["num_submissions"], results["num_comments"]
     )
     for topic, fig in figs.items():
         st.subheader(f"{topic.upper()} Sentiment")
+        
         last_timestamp = results["last_timestamps"].get(topic)
-        st.caption(
-            f"Last mentioned: {last_timestamp.strftime('%Y-%m-%d %H:%M:%S')}" if last_timestamp else "No mentions found"
-        )
+        if last_timestamp:
+            try:
+                # Convert string to datetime object
+                last_timestamp = datetime.fromisoformat(last_timestamp)
+                formatted_timestamp = last_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                st.caption(f"Last mentioned: {formatted_timestamp}")
+            except ValueError:
+                st.caption("Last mentioned: Invalid date format")
+        else:
+            st.caption("No mentions found")
+
         st.plotly_chart(fig, use_container_width=True)
+
 
 
 def display_summary_statistics(results):
@@ -134,5 +146,10 @@ def determine_sentiment_color(score):
 def format_timestamp(timestamp):
     """Format the timestamp for display."""
     if timestamp:
-        return f" | Last Mention: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+        try:
+            dt_timestamp = datetime.fromisoformat(timestamp)
+            return f" | Last Mention: {dt_timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+        except ValueError:
+            return " | Last Mention: Invalid date format"
     return ""
+

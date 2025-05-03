@@ -95,8 +95,9 @@ def display_finlight_source(universe):
             col1, col2 = st.columns([1, 3])
 
             sentiment_score = float(item.get("sentiment", 0))
-            finlight_sentiment = float(item.get("finlight_sentiment", 0))
             sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
+            finlight_sentiment = float(item.get("finlight_sentiment", 0))
+            finlight_sentiment_color = "green" if finlight_sentiment > 0 else "red" if finlight_sentiment < 0 else "black"
 
             with col1:
                 st.markdown(f"<h3>{topic.upper()}</h3>", unsafe_allow_html=True)
@@ -105,7 +106,7 @@ def display_finlight_source(universe):
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                    f"<h4 style='color:{sentiment_color}'><b>finlight: {finlight_sentiment:.2f}</b></h4>",
+                    f"<h4 style='color:{finlight_sentiment_color}'><b>finlight: {finlight_sentiment:.2f}</b></h4>",
                     unsafe_allow_html=True,
                 )
 
