@@ -10,53 +10,33 @@ def display_finlight_source(universe):
 
     # Fetch data from API
     with st.spinner(f"Fetching Finlight data for {len(universe.get('topics', []))} topic(s)..."):
-        (
-            all_topic_news,
-            topic_finlight_sentiments,
-            overall_finlight_sentiment_average,
-            latest_articles,
-            article_counts,
-        ) = APIClient.process_finlight_feed(universe)
+        universe_feeds, overall_average = APIClient.process_finlight_feed(universe)
 
-    print(
-        f"FINLIGHT data summary: {len(all_topic_news)} topics, {len(topic_finlight_sentiments)} sentiment entries analyzed."
-    )
+    print(f"FINLIGHT data summary: {len(universe_feeds)} topics analyzed.")
 
-    if not any(all_topic_news.values()):
+    if not universe_feeds:
         st.warning("No news data found for the selected topics.")
         return
 
     st.header("Finlight Source")
 
     finlight_color = (
-        "green"
-        if overall_finlight_sentiment_average > 0
-        else "red"
-        if overall_finlight_sentiment_average < 0
-        else "black"
+        "green" if overall_average > 0 else "red" if overall_average < 0 else "black"
     )
     st.markdown(
-        f"<h4 style='color:{finlight_color}'>Overall Sentiment: {overall_finlight_sentiment_average:.4f}</h4>",
+        f"<h4 style='color:{finlight_color}'>Overall Sentiment: {overall_average:.4f}</h4>",
         unsafe_allow_html=True,
     )
 
-    # Create dataframe for topic sentiments
     topic_data = []
-    for topic, sent in topic_finlight_sentiments.items():
-        # More robust error handling for latest_articles
-        try:
-            if latest_articles and topic in latest_articles and latest_articles[topic]:
-                latest_date = latest_articles[topic].get("published_date", "")
-            else:
-                latest_date = ""
-        except (AttributeError, TypeError):
-            latest_date = ""
+    for feed in universe_feeds:
+        latest_date = feed["latest_article"].get("published_date", "") if feed["latest_article"] else ""
 
         topic_data.append(
             {
-                "Topic": topic,
-                "Sentiment Score": sent,
-                "Articles": article_counts.get(topic, 0),
+                "Topic": feed["topic"],
+                "Sentiment Score": feed["sentiment_average"],
+                "Articles": feed["article_count"],
                 "Latest Article": latest_date,
             }
         )
@@ -65,7 +45,6 @@ def display_finlight_source(universe):
         df = pd.DataFrame(topic_data)
         st.subheader("Finlight Topic Sentiment Scores")
 
-        # Apply styling to sentiment scores
         def color_sentiment(val):
             color = "green" if val > 0 else "red" if val < 0 else "black"
             return f'<span style="color:{color}">{val:.4f}</span>'
@@ -73,7 +52,6 @@ def display_finlight_source(universe):
         df_display = df.copy()
         df_display["Sentiment Score"] = df_display["Sentiment Score"].apply(color_sentiment)
 
-        # Display with HTML
         st.write(
             df_display.to_html(escape=False, index=False),
             unsafe_allow_html=True,
@@ -81,19 +59,23 @@ def display_finlight_source(universe):
 
     st.markdown("---")
 
-    # Topic selection menu
-    topics_available = list(all_topic_news.keys())
+    topics_available = [feed["topic"] for feed in universe_feeds]
     selected_topic = st.selectbox("Select Topic to Display Articles", ["All"] + topics_available)
 
     st.header("News Articles")
 
     topics_to_display = topics_available if selected_topic == "All" else [selected_topic]
 
-    for topic, news_items in {k: v for k, v in all_topic_news.items() if k in topics_to_display}.items():
+    for feed in universe_feeds:
+        if feed["topic"] not in topics_to_display:
+            continue
+
+        news_items = feed["articles"]
+
         if not news_items:
             continue
 
-        st.subheader(f"{topic.upper()} ({article_counts.get(topic, 0)} articles)")
+        st.subheader(f"{feed['topic'].upper()} ({feed['article_count']} articles)")
 
         for item in news_items:
             col1, col2 = st.columns([1, 3])
@@ -102,7 +84,7 @@ def display_finlight_source(universe):
             sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
 
             with col1:
-                st.markdown(f"<h3>{topic.upper()}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3>{feed['topic'].upper()}</h3>", unsafe_allow_html=True)
                 st.markdown(
                     f"<h4 style='color:{sentiment_color}'><b>Sentiment: {sentiment_score:.2f}</b></h4>",
                     unsafe_allow_html=True,
@@ -110,7 +92,6 @@ def display_finlight_source(universe):
 
                 images = item.get("images", [])
                 if images:
-                    # Create inner columns to control image width to 90%
                     img_space1, img_col, img_space2 = st.columns([0.05, 0.9, 0.05])
                     with img_col:
                         st.image(images[0], use_container_width=True)
