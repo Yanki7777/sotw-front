@@ -24,7 +24,7 @@ def display_finlight_source(universe):
         "green" if overall_average > 0 else "red" if overall_average < 0 else "black"
     )
     st.markdown(
-        f"<h4 style='color:{finlight_color}'>Overall Sentiment: {overall_average:.4f}</h4>",
+        f"<h4 style='color:{finlight_color}'>Overall Finlight Sentiment: {overall_average:.4f}</h4>",
         unsafe_allow_html=True,
     )
 
@@ -35,7 +35,9 @@ def display_finlight_source(universe):
         topic_data.append(
             {
                 "Topic": feed["topic"],
-                "Sentiment Score": feed["sentiment_average"],
+                "Finlight Sentiment": feed["finlight_sentiment_average"],
+                "FinBERT Sentiment": feed["finbert_sentiment_average"],
+                "GPT4.1 Sentiment": feed["gpt41_sentiment_average"],
                 "Articles": feed["article_count"],
                 "Latest Article": latest_date,
             }
@@ -50,7 +52,8 @@ def display_finlight_source(universe):
             return f'<span style="color:{color}">{val:.4f}</span>'
 
         df_display = df.copy()
-        df_display["Sentiment Score"] = df_display["Sentiment Score"].apply(color_sentiment)
+        for sentiment_col in ["Finlight Sentiment", "FinBERT Sentiment", "GPT4.1 Sentiment"]:
+            df_display[sentiment_col] = df_display[sentiment_col].apply(color_sentiment)
 
         st.write(
             df_display.to_html(escape=False, index=False),
@@ -80,7 +83,7 @@ def display_finlight_source(universe):
         for item in news_items:
             col1, col2 = st.columns([1, 3])
 
-            sentiment_score = float(item.get("sentiment", 0))
+            sentiment_score = float(item.get("finlight_sentiment", 0))
             sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
 
             with col1:
