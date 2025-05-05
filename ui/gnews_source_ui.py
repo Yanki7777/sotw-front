@@ -34,7 +34,8 @@ def display_gnews_source(universe):
         topic_data.append(
             {
                 "Topic": feed["topic"],
-                "Sentiment Score": feed["average_sentiment"],
+                "Vader Sentiment": feed["vader_sentiment"],
+                "GPT41 Sentiment": feed["gpt41_sentiment"],
                 "Articles": feed["article_count"],
                 "Latest Article": latest_date,
             }
@@ -44,16 +45,19 @@ def display_gnews_source(universe):
         df = pd.DataFrame(topic_data)
         st.subheader("GNews Topic Sentiment Scores")
 
+        sentiment_cols = ["Vader Sentiment", "GPT41 Sentiment"]
+
         st.write(
-            df.style.format({"Sentiment Score": "{:.4f}"})
+            df.style.format({col: "{:.4f}" for col in sentiment_cols})
             .applymap(
-                lambda val: "color: green" if isinstance(val, float) and val > 0 else "color: red" if isinstance(val, float) and val < 0 else "",
-                subset=["Sentiment Score"],
+                lambda val: "color: green" if val > 0 else ("color: red" if val < 0 else "color: black"),
+                subset=sentiment_cols,
             )
             .set_table_styles([{"selector": "th, td", "props": [("text-align", "left"), ("padding", "8px")]}])
             .to_html(),
             unsafe_allow_html=True,
         )
+
 
     st.markdown("---")
     st.header("News Articles")
