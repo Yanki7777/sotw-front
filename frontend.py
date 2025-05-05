@@ -17,22 +17,27 @@ apply_torch_classes_patch()
 
 
 def initialize_session_state():
-    defaults = {
-        "top_news": None,
-        "universes": APIClient.get_all_universes(),
-        "selected_universe": None,
-        "show_correlation_finder": False,
-        "active_tab": "universe",  # Default tab is universe
-        "refresh_universe_dashboard": False,
-        "refresh_topic_dashboard": False,
-    }
-    for key, value in defaults.items():
-        st.session_state.setdefault(key, value)
+    """
+    Initialize Streamlit session state without redundant API calls.
+    Checks if data already exists in session state before fetching from API.
+    """
+    # Set defaults only if the keys are not already in session state
+    if "universes" not in st.session_state:
+        st.session_state["universes"] = APIClient.get_all_universes()
 
-    if st.session_state["top_news"] is None:
+    if "selected_universe" not in st.session_state:
+        st.session_state["selected_universe"] = None
+
+    if "top_news" not in st.session_state or "top_news_count" not in st.session_state:
         news, count = APIClient.get_top_news(max_results=8)
-        st.session_state["top_news"], st.session_state["top_news_count"] = news, count
+        st.session_state["top_news"] = news
+        st.session_state["top_news_count"] = count
 
+    # Set additional default states if needed
+    st.session_state.setdefault("show_correlation_finder", False)
+    st.session_state.setdefault("active_tab", "universe")
+    st.session_state.setdefault("refresh_universe_dashboard", False)
+    st.session_state.setdefault("refresh_topic_dashboard", False)
 
 def setup_page():
     st.set_page_config(
