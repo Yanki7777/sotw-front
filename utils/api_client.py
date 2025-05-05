@@ -111,10 +111,11 @@ class APIClient:
         try:
             response = requests.post(f"{API_BASE_URL}/feed/fmp", json=universe)
             data = response.json()
-            return data.get("topic_prices", {}), data.get("price_timestamps", {})
+            return data.get("universe_feeds", [])
         except Exception as e:
             print(f"Error processing FMP feed: {e}")
-            return {}, {}
+            return []
+
 
     @staticmethod
     def process_alpha_feed(universe):
@@ -205,10 +206,10 @@ class APIClient:
         try:
             response = requests.post(f"{API_BASE_URL}/feed/meteo", json=universe)
             data = response.json()
-            return data.get("topic_air_quality", {}), data.get("air_quality_timestamps", {})
+            return data.get("universe_feeds", [])
         except Exception as e:
             print(f"Error processing Meteo feed: {e}")
-            return {}, {}
+            return []
 
     @staticmethod
     @st.cache_data(ttl=300)  # Cache for 5 minutes
