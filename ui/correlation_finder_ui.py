@@ -26,7 +26,6 @@ def display_correlation_finder():
     with col2:
         st.subheader("Feed 2")
         feed2 = select_feed(2, universes)
- 
 
     # Initialize time window in session state if not present
     if "correlation_time_window" not in st.session_state:
@@ -62,9 +61,7 @@ def display_correlation_finder():
 
                     st.plotly_chart(fig, use_container_width=True, key=f"corr_plot_{timestamp}")
                     if corr_value is not None:
-                        st.metric(
-                            "Pearson Correlation Coefficient", f"{corr_value:.4f}", key=f"corr_metric_{timestamp}"
-                        )
+                        st.metric("Pearson Correlation Coefficient", f"{corr_value:.4f}")
                 else:
                     st.warning("Unable to generate plot. Check data availability.")
         else:
