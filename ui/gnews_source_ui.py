@@ -74,11 +74,18 @@ def display_gnews_source(universe):
             with col1:
                 st.markdown(f"<h3>{feed['topic'].upper()}</h3>", unsafe_allow_html=True)
 
-                sentiment_score = float(item.get("sentiment", 0))
+                sentiment_score = float(item.get("vader_sentiment", 0))
                 sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
 
                 st.markdown(
-                    f"<h3 style='color:{sentiment_color}'><b>Sentiment Score:</b> {sentiment_score:.2f}</h3>",
+                    f"<h4 style='color:{sentiment_color}'><b>Vader Sentiment:</b> {sentiment_score:.2f}</h4>",
+                    unsafe_allow_html=True,
+                )
+                sentiment_score = float(item.get("gpt41_sentiment", 0))
+                sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
+
+                st.markdown(
+                    f"<h4 style='color:{sentiment_color}'><b>GPT41 Sentiment:</b> {sentiment_score:.2f}</h4>",
                     unsafe_allow_html=True,
                 )
 
