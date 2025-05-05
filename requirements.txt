@@ -3,3 +3,4 @@ matplotlib>=3.5.0
 python-dotenv>=0.20.0
 streamlit>=1.18.0
 plotly>=5.10.0
+scipy

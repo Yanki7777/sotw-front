@@ -58,10 +58,10 @@ def display_correlation_finder():
                 if df1 is not None and df2 is not None:
                     fig = create_dual_axis_plot(feed1, feed2, df1, df2)
                     corr_value = calculate_correlation(df1, df2)
-
-                    st.plotly_chart(fig, use_container_width=True, key=f"corr_plot_{timestamp}")
                     if corr_value is not None:
-                        st.metric("Pearson Correlation Coefficient", f"{corr_value:.4f}")
+                        st.metric("Spearman Correlation Coefficient", f"{corr_value:.4f}")
+                    st.plotly_chart(fig, use_container_width=True, key=f"corr_plot_{timestamp}")
+                    
                 else:
                     st.warning("Unable to generate plot. Check data availability.")
         else:
@@ -147,7 +147,27 @@ def create_dual_axis_plot(feed1, feed2, df1, df2):
 
 
 def calculate_correlation(df1, df2):
-    combined = pd.merge(df1, df2, on="created_timestamp", suffixes=("_1", "_2")).dropna()
+    # Convert timestamps to datetime
+    df1['created_timestamp'] = pd.to_datetime(df1['created_timestamp'])
+    df2['created_timestamp'] = pd.to_datetime(df2['created_timestamp'])
+
+    # Set timestamp as index
+    df1.set_index('created_timestamp', inplace=True)
+    df2.set_index('created_timestamp', inplace=True)
+
+    # Reindex df2 to timestamps of df1, interpolating values to match closely
+    df2_aligned = df2.reindex(df1.index, method='nearest', tolerance=pd.Timedelta('1min'))
+
+    # Combine into single DataFrame
+    combined = pd.DataFrame({
+        "feature_value_1": df1["feature_value"],
+        "feature_value_2": df2_aligned["feature_value"]
+    }).dropna()
+
     if len(combined) < 2:
         return None
-    return combined["feature_value_1"].corr(combined["feature_value_2"])
+
+    # Calculate Spearman correlation
+    return combined["feature_value_1"].corr(combined["feature_value_2"], method='spearman')
+
+
