@@ -1,9 +1,7 @@
 import streamlit as st
-import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
 from utils.general_utils import filter_dataframe_by_time, get_topic_description, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
-
 
 def fetch_data(universe_name):
     return APIClient.get_feed_from_db(universe_name=universe_name)

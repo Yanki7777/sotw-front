@@ -1,8 +1,6 @@
 """Results display module for the Reddit Sentiment Analysis app."""
 
 import streamlit as st
-import numpy as np
-from datetime import datetime
 from utils.plot_utils import create_reddit_source_sentiment_plot, create_reddit_source_topic_plot
 from utils.api_client import APIClient
 from config import (
