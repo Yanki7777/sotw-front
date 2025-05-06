@@ -152,18 +152,10 @@ class APIClient:
         try:
             response = requests.post(f"{API_BASE_URL}/feed/reddit", json=universe)
             data = response.json()
-            return (
-                data.get("all_sentiment_scores", []),
-                data.get("topic_sentiments_scores", {}),
-                data.get("topic_num_submissions", {}),
-                data.get("topic_num_comments", {}),
-                data.get("topic_last_timestamps", {}),
-                data.get("topic_averages", {}),
-                data.get("overall_sentiment_average", 0),
-            )
+            return data.get("universe_feeds", []), data.get("overall_sentiment_average", 0)
         except Exception as e:
             print(f"Error processing Reddit feed: {e}")
-            return [], {}, {}, {}, {}, {}, 0
+            return [], 0
 
     @staticmethod
     def create_meteo_feed(universe):

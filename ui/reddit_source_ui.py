@@ -18,38 +18,21 @@ def display_reddit_source(universe):
         return
 
     with st.spinner(f"Scanning REDDIT and analyzing for {universe.get('universe_name')}..."):
-        (
-            sentiment_scores,
-            topic_sentiments,
-            num_submissions,
-            num_comments,
-            last_timestamps,
-            topic_averages,
-            overall_sentiment_average,
-        ) = APIClient.create_reddit_feed(universe)
+        universe_feeds, overall_sentiment_average = APIClient.create_reddit_feed(universe)
 
-        print(
-            f"REDDIT source data summary: {len(sentiment_scores)} data points analyzed across {len(topic_sentiments)} topics"
-        )
+        print(f"REDDIT source data summary: Analyzed {len(universe_feeds)} topics")
 
-    # Store results in a dictionary
     results = {
-        "sentiment_scores": sentiment_scores,
-        "topic_sentiments": topic_sentiments,
-        "num_submissions": num_submissions,
-        "num_comments": num_comments,
-        "last_timestamps": last_timestamps,
-        "topic_averages": topic_averages,
+        "universe_feeds": universe_feeds,
         "overall_sentiment_average": overall_sentiment_average,
     }
 
     st.markdown("---")
-    st.header("Reddit Sentiment source")
+    st.header("Reddit Sentiment Source")
 
-    # Show analysis scope information
-    st.caption(f"Analyzed Reddit posts tracking {len(results.get('topic_sentiments', {}))} topics")
+    st.caption(f"Analyzed Reddit posts tracking {len(results['universe_feeds'])} topics")
 
-    tab1, tab2, tab3 = st.tabs(["Overall Sentiment", "topic Sentiment", "Summary Statistics"])
+    tab1, tab2, tab3 = st.tabs(["Overall Sentiment", "Topic Sentiment", "Summary Statistics"])
 
     with tab1:
         display_overall_sentiment(results)
@@ -64,72 +47,77 @@ def display_overall_sentiment(results):
     st.header("Overall Sentiment Analysis")
     avg = results["overall_sentiment_average"]
 
-    if avg is not None:
-        avg_color = determine_sentiment_color(avg)
-        st.markdown(
-            f"<h3>Average topic Sentiment: <span style='color:{avg_color}'>{avg:.3f}</span></h3>",
-            unsafe_allow_html=True,
-        )
-        st.progress(avg / 2 + 0.5)
-
-    fig = create_reddit_source_sentiment_plot(
-        results["sentiment_scores"], results["num_submissions"], results["num_comments"]
+    avg_color = determine_sentiment_color(avg)
+    st.markdown(
+        f"<h3>Average Sentiment: <span style='color:{avg_color}'>{avg:.3f}</span></h3>",
+        unsafe_allow_html=True,
     )
+    st.progress(avg / 2 + 0.5)
+
+    sentiment_scores = [feed["sentiment_average"] for feed in results["universe_feeds"]]
+    total_submissions = sum(feed["num_submissions"] for feed in results["universe_feeds"])
+    total_comments = sum(feed["num_comments"] for feed in results["universe_feeds"])
+
+    fig = create_reddit_source_sentiment_plot(sentiment_scores, total_submissions, total_comments)
     st.plotly_chart(fig, use_container_width=True)
 
 
 def display_topic_sentiment(results):
     """Display topic-specific sentiment analysis."""
     st.header("Topic-Specific Sentiment")
-    figs = create_reddit_source_topic_plot(
-        results["topic_sentiments"], results["num_submissions"], results["num_comments"]
-    )
-    for topic, fig in figs.items():
+    topic_sentiments = {feed["topic"]: feed["sentiment_average"] for feed in results["universe_feeds"]}
+    num_submissions = {feed["topic"]: feed["num_submissions"] for feed in results["universe_feeds"]}
+    num_comments = {feed["topic"]: feed["num_comments"] for feed in results["universe_feeds"]}
+    figs = create_reddit_source_topic_plot(topic_sentiments, num_submissions, num_comments)
+
+    for feed in results["universe_feeds"]:
+        topic = feed["topic"]
+        avg_sentiment = feed["sentiment_average"]
+        last_timestamp = feed["last_timestamp"]
+
+        avg_color = determine_sentiment_color(avg_sentiment)
         st.subheader(f"{topic.upper()} Sentiment")
 
-        last_timestamp = results["last_timestamps"].get(topic)
         if last_timestamp:
-            try:
-                # Convert string to datetime object
-                last_timestamp = datetime.fromisoformat(last_timestamp)
-                formatted_timestamp = last_timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                st.caption(f"Last mentioned: {formatted_timestamp}")
-            except ValueError:
-                st.caption("Last mentioned: Invalid date format")
+            formatted_timestamp = last_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            st.caption(f"Last mentioned: {formatted_timestamp}")
         else:
             st.caption("No mentions found")
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown(
+            f"Average Sentiment: <b style='color:{avg_color}'>{avg_sentiment:.3f}</b>",
+            unsafe_allow_html=True,
+        )
+        st.plotly_chart(figs[topic], use_container_width=True)
 
 
 def display_summary_statistics(results):
     """Display summary statistics of the analysis."""
     st.header("Summary Statistics")
-    total_submissions = sum(results["num_submissions"].values())
-    total_comments = sum(results["num_comments"].values())
-    subreddit_count = len(results.get("subreddits", []))
-    positive_karma_filter = results.get("positive_karma_only", False)
+    total_submissions = sum(feed["num_submissions"] for feed in results["universe_feeds"])
+    total_comments = sum(feed["num_comments"] for feed in results["universe_feeds"])
+    total_topics = len(results["universe_feeds"])
 
     st.subheader("Overall Data")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Subreddits Scanned", subreddit_count)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Topics", total_topics)
     col2.metric("Total Submissions", total_submissions)
     col3.metric("Total Comments", total_comments)
-    col4.metric("Total Data Points", len(results["sentiment_scores"]))
 
-    st.markdown(f"**Filter Settings**: Positive Karma Only: {'✅ Yes' if positive_karma_filter else '❌ No'}")
+    st.subheader("Topic Analysis")
+    for feed in results["universe_feeds"]:
+        topic = feed["topic"]
+        avg_sentiment = feed["sentiment_average"]
+        avg_color = determine_sentiment_color(avg_sentiment)
+        last_timestamp = feed["last_timestamp"]
 
-    st.subheader("topic Analysis")
-    for topic, scores in results["topic_sentiments"].items():
-        if scores:
-            avg_score = np.mean(scores)
-            avg_color = determine_sentiment_color(avg_score)
-            timestamp_info = format_timestamp(results["last_timestamps"].get(topic))
-            st.markdown(
-                f"**{topic.upper()}**: {len(scores)} mentions, Avg Sentiment: <b style='color:{avg_color}'>{avg_score:.3f}</b>{timestamp_info}",
-                unsafe_allow_html=True,
-            )
-            st.progress(avg_score / 2 + 0.5)
+        timestamp_info = format_timestamp(last_timestamp)
+
+        st.markdown(
+            f"**{topic.upper()}**: Avg Sentiment: <b style='color:{avg_color}'>{avg_sentiment:.3f}</b>{timestamp_info}",
+            unsafe_allow_html=True,
+        )
+        st.progress(avg_sentiment / 2 + 0.5)
 
 
 def determine_sentiment_color(score):
@@ -144,9 +132,5 @@ def determine_sentiment_color(score):
 def format_timestamp(timestamp):
     """Format the timestamp for display."""
     if timestamp:
-        try:
-            dt_timestamp = datetime.fromisoformat(timestamp)
-            return f" | Last Mention: {dt_timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
-        except ValueError:
-            return " | Last Mention: Invalid date format"
+        return f" | Last Mention: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
     return ""

@@ -12,8 +12,16 @@ from config import NEGATIVE_SENTIMENT_THRESHOLD, POSITIVE_SENTIMENT_THRESHOLD, S
 
 def create_reddit_source_sentiment_plot(sentiment_scores, num_submissions, num_comments):
     """Create an interactive Plotly histogram of overall sentiment scores."""
-    total_submissions = sum(num_submissions.values())
-    total_comments = sum(num_comments.values())
+    if isinstance(num_submissions, dict):
+        total_submissions = sum(num_submissions.values())
+    else:
+        total_submissions = num_submissions
+
+    if isinstance(num_comments, dict):
+        total_comments = sum(num_comments.values())
+    else:
+        total_comments = num_comments
+
     total_count = total_submissions + total_comments
 
     fig = px.histogram(
@@ -50,6 +58,7 @@ def create_reddit_source_sentiment_plot(sentiment_scores, num_submissions, num_c
     )
 
     return fig
+
 
 
 def create_reddit_source_topic_plot(topic_sentiments, num_submissions, num_comments):
