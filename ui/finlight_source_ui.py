@@ -35,7 +35,7 @@ def display_finlight_source(universe):
                 "Topic": feed["topic"],
                 "Finlight Sentiment": feed["finlight_sentiment_average"],
                 "FinBERT Sentiment": feed["finbert_sentiment_average"],
-                "GPT4.1 Sentiment": feed["gpt41_sentiment_average"],
+                "Vader Sentiment": feed["vader_sentiment_average"],
                 "Articles": feed["article_count"],
                 "Latest Article": latest_date,
             }
@@ -50,7 +50,7 @@ def display_finlight_source(universe):
             return f'<span style="color:{color}">{val:.4f}</span>'
 
         df_display = df.copy()
-        for sentiment_col in ["Finlight Sentiment", "FinBERT Sentiment", "GPT4.1 Sentiment"]:
+        for sentiment_col in ["Finlight Sentiment", "FinBERT Sentiment", "Vader Sentiment"]:
             df_display[sentiment_col] = df_display[sentiment_col].apply(color_sentiment)
 
         st.write(
@@ -81,13 +81,26 @@ def display_finlight_source(universe):
         for item in news_items:
             col1, col2 = st.columns([1, 3])
 
-            sentiment_score = float(item.get("finlight_sentiment", 0))
-            sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
+            finlight_sentiment = float(item.get("finlight_sentiment", 0))
+            finbert_sentiment = float(item.get("finbert_sentiment", 0))
+            vader_sentiment = float(item.get("vader_sentiment", 0))
+
+            finlight_color = "green" if finlight_sentiment > 0 else "red" if finlight_sentiment < 0 else "black"
+            finbert_color = "green" if finbert_sentiment > 0 else "red" if finbert_sentiment < 0 else "black"
+            vader_color = "green" if vader_sentiment > 0 else "red" if vader_sentiment < 0 else "black"
 
             with col1:
-                st.markdown(f"<h3>{feed['topic'].upper()}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h4>{feed['topic'].upper()}</h4>", unsafe_allow_html=True)
                 st.markdown(
-                    f"<h4 style='color:{sentiment_color}'><b>Sentiment: {sentiment_score:.2f}</b></h4>",
+                    f"<h5 style='color:{finlight_color}'><b>Finlight: {finlight_sentiment:.2f}</b></h5>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"<h5 style='color:{finbert_color}'><b>FinBERT: {finbert_sentiment:.2f}</b></h5>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"<h5 style='color:{vader_color}'><b>Vader: {vader_sentiment:.2f}</b></h5>",
                     unsafe_allow_html=True,
                 )
 

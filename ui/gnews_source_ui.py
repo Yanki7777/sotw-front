@@ -34,8 +34,8 @@ def display_gnews_source(universe):
         topic_data.append(
             {
                 "Topic": feed["topic"],
-                #"Vader Sentiment": feed["vader_sentiment"],
-                "GPT41 Sentiment": feed["gpt41_sentiment"],
+                "Vader Sentiment": feed["vader_sentiment"],    
+                "Finbert Sentiment": feed["finbert_sentiment"],
                 "Articles": feed["article_count"],
                 "Latest Article": latest_date,
             }
@@ -45,7 +45,7 @@ def display_gnews_source(universe):
         df = pd.DataFrame(topic_data)
         st.subheader("GNews Topic Sentiment Scores")
 
-        sentiment_cols = [ "GPT41 Sentiment"] # "Vader Sentiment"
+        sentiment_cols = [ "Vader Sentiment", "Finbert Sentiment"] 
 
         st.write(
             df.style.format({col: "{:.4f}" for col in sentiment_cols})
@@ -73,18 +73,18 @@ def display_gnews_source(universe):
             with col1:
                 st.markdown(f"<h3>{feed['topic'].upper()}</h3>", unsafe_allow_html=True)
 
-                # sentiment_score = float(item.get("vader_sentiment", 0))
-                # sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
-
-                # st.markdown(
-                #     f"<h4 style='color:{sentiment_color}'><b>Vader Sentiment:</b> {sentiment_score:.2f}</h4>",
-                #     unsafe_allow_html=True,
-                # )
-                sentiment_score = float(item.get("gpt41_sentiment", 0))
+                sentiment_score = float(item.get("vader_sentiment", 0))
                 sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
 
                 st.markdown(
-                    f"<h4 style='color:{sentiment_color}'><b>GPT41 Sentiment:</b> {sentiment_score:.2f}</h4>",
+                    f"<h4 style='color:{sentiment_color}'><b>Vader Sentiment:</b> {sentiment_score:.2f}</h4>",
+                    unsafe_allow_html=True,
+                )
+                sentiment_score = float(item.get("finbert_sentiment", 0))
+                sentiment_color = "green" if sentiment_score > 0 else "red" if sentiment_score < 0 else "black"
+
+                st.markdown(
+                    f"<h4 style='color:{sentiment_color}'><b>Finbert Sentiment:</b> {sentiment_score:.2f}</h4>",
                     unsafe_allow_html=True,
                 )
 
