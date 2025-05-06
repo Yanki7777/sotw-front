@@ -9,7 +9,7 @@ def display_meteo_source(universe):
         return
 
     with st.spinner(f"Fetching air quality data for {len(universe.get('topics'))} location(s)..."):
-        universe_feeds = APIClient.process_meteo_feed(universe)
+        universe_feeds = APIClient.create_meteo_feed(universe)
 
     print(f"METEO source data summary: {len(universe_feeds)} locations analyzed")
 
@@ -23,24 +23,28 @@ def display_meteo_source(universe):
     for feed in universe_feeds:
         if "air_quality" in feed:
             aq = feed["air_quality"]
-            topic_data.append({
-                "Location": feed["city"],
-                "US AQI": aq.get("us_aqi", "N/A"),
-                "PM10": aq.get("pm10", "N/A"),
-                "PM2.5": aq.get("pm2_5", "N/A"),
-                "CO": aq.get("carbon_monoxide", "N/A"),
-                "Timestamp": feed.get("timestamp", "N/A")
-            })
+            topic_data.append(
+                {
+                    "Location": feed["city"],
+                    "US AQI": aq.get("us_aqi", "N/A"),
+                    "PM10": aq.get("pm10", "N/A"),
+                    "PM2.5": aq.get("pm2_5", "N/A"),
+                    "CO": aq.get("carbon_monoxide", "N/A"),
+                    "Timestamp": feed.get("timestamp", "N/A"),
+                }
+            )
         else:
-            topic_data.append({
-                "Location": feed["city"],
-                "US AQI": "Error",
-                "PM10": "Error",
-                "PM2.5": "Error",
-                "CO": "Error",
-                "Timestamp": "N/A",
-                "Error": feed.get("error", "Unknown error")
-            })
+            topic_data.append(
+                {
+                    "Location": feed["city"],
+                    "US AQI": "Error",
+                    "PM10": "Error",
+                    "PM2.5": "Error",
+                    "CO": "Error",
+                    "Timestamp": "N/A",
+                    "Error": feed.get("error", "Unknown error"),
+                }
+            )
 
     df = pd.DataFrame(topic_data)
     st.subheader("Air Quality Metrics")

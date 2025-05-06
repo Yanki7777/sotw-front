@@ -12,7 +12,7 @@ def display_alpha_source(universe):
 
     # Pass the universe directly
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
-        universe_feeds, overall_sentiment_average = APIClient.process_alpha_feed(universe)
+        universe_feeds, overall_sentiment_average = APIClient.create_alpha_feed(universe)
 
     print(f"ALPHA source data summary: {len(universe_feeds)} topics processed")
 

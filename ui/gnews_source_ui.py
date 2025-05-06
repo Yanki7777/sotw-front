@@ -11,7 +11,7 @@ def display_gnews_source(universe):
         return
 
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
-        universe_feeds, overall_sentiment_average = APIClient.process_gnews_feed(universe)
+        universe_feeds, overall_sentiment_average = APIClient.create_gnews_feed(universe)
 
     print(f"GNEWS source data summary: {len(universe_feeds)} topics analyzed")
 
@@ -57,7 +57,6 @@ def display_gnews_source(universe):
             .to_html(),
             unsafe_allow_html=True,
         )
-
 
     st.markdown("---")
     st.header("News Articles")

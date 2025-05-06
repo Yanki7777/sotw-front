@@ -13,7 +13,7 @@ def display_newsapi_source(universe):
     # Fetch news for all topics with UI feedback
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
         all_topic_news, topic_averages, overall_sentiment_average, latest_articles, article_counts = (
-            APIClient.process_newsapi_feed(universe)
+            APIClient.create_newsapi_feed(universe)
         )
 
     print(

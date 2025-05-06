@@ -106,8 +106,7 @@ class APIClient:
             return None
 
     @staticmethod
-    def process_fmp_feed(universe):
-        """Process FMP feed data."""
+    def create_fmp_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/fmp", json=universe)
             data = response.json()
@@ -116,10 +115,8 @@ class APIClient:
             print(f"Error processing FMP feed: {e}")
             return []
 
-
     @staticmethod
-    def process_alpha_feed(universe):
-        """Process Alpha Vantage feed data."""
+    def create_alpha_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/alpha", json=universe)
             data = response.json()
@@ -129,11 +126,10 @@ class APIClient:
             )
         except Exception as e:
             print(f"Error processing Alpha feed: {e}")
-            return [], 0.0 
-    
+            return [], 0.0
+
     @staticmethod
-    def process_newsapi_feed(universe):
-        """Process NewsAPI feed data."""
+    def create_newsapi_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/newsapi", json=universe)
             data = response.json()
@@ -149,8 +145,7 @@ class APIClient:
             return {}, {}, 0, {}, {}
 
     @staticmethod
-    def process_gnews_feed(universe):
-        """Process GNews feed data."""
+    def create_gnews_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/gnews", json=universe)
             data = response.json()
@@ -159,10 +154,8 @@ class APIClient:
             print(f"Error processing GNews feed: {e}")
             return [], 0
 
-
     @staticmethod
-    def process_finlight_feed(universe):        
-        """Process Finlight feed data."""
+    def create_finlight_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/finlight", json=universe)
             data = response.json()
@@ -171,10 +164,8 @@ class APIClient:
             print(f"Error processing Finlight feed: {e}")
             return [], 0
 
-
     @staticmethod
-    def process_reddit_feed(universe):
-        """Process Reddit feed data."""
+    def create_reddit_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/reddit", json=universe)
             data = response.json()
@@ -192,8 +183,7 @@ class APIClient:
             return [], {}, {}, {}, {}, {}, 0
 
     @staticmethod
-    def process_meteo_feed(universe):
-        """Process Meteo feed data."""
+    def create_meteo_feed(universe):
         try:
             response = requests.post(f"{API_BASE_URL}/feed/meteo", json=universe)
             data = response.json()

@@ -10,7 +10,7 @@ def display_finlight_source(universe):
 
     # Fetch data from API
     with st.spinner(f"Fetching Finlight data for {len(universe.get('topics', []))} topic(s)..."):
-        universe_feeds, overall_average = APIClient.process_finlight_feed(universe)
+        universe_feeds, overall_average = APIClient.create_finlight_feed(universe)
 
     print(f"FINLIGHT data summary: {len(universe_feeds)} topics analyzed.")
 
@@ -20,9 +20,7 @@ def display_finlight_source(universe):
 
     st.header("Finlight Source")
 
-    finlight_color = (
-        "green" if overall_average > 0 else "red" if overall_average < 0 else "black"
-    )
+    finlight_color = "green" if overall_average > 0 else "red" if overall_average < 0 else "black"
     st.markdown(
         f"<h4 style='color:{finlight_color}'>Overall Finlight Sentiment: {overall_average:.4f}</h4>",
         unsafe_allow_html=True,

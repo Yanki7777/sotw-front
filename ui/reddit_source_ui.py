@@ -26,7 +26,7 @@ def display_reddit_source(universe):
             last_timestamps,
             topic_averages,
             overall_sentiment_average,
-        ) = APIClient.process_reddit_feed(universe)
+        ) = APIClient.create_reddit_feed(universe)
 
         print(
             f"REDDIT source data summary: {len(sentiment_scores)} data points analyzed across {len(topic_sentiments)} topics"
@@ -78,7 +78,6 @@ def display_overall_sentiment(results):
     st.plotly_chart(fig, use_container_width=True)
 
 
-
 def display_topic_sentiment(results):
     """Display topic-specific sentiment analysis."""
     st.header("Topic-Specific Sentiment")
@@ -87,13 +86,13 @@ def display_topic_sentiment(results):
     )
     for topic, fig in figs.items():
         st.subheader(f"{topic.upper()} Sentiment")
-        
+
         last_timestamp = results["last_timestamps"].get(topic)
         if last_timestamp:
             try:
                 # Convert string to datetime object
                 last_timestamp = datetime.fromisoformat(last_timestamp)
-                formatted_timestamp = last_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                formatted_timestamp = last_timestamp.strftime("%Y-%m-%d %H:%M:%S")
                 st.caption(f"Last mentioned: {formatted_timestamp}")
             except ValueError:
                 st.caption("Last mentioned: Invalid date format")
@@ -101,7 +100,6 @@ def display_topic_sentiment(results):
             st.caption("No mentions found")
 
         st.plotly_chart(fig, use_container_width=True)
-
 
 
 def display_summary_statistics(results):
@@ -152,4 +150,3 @@ def format_timestamp(timestamp):
         except ValueError:
             return " | Last Mention: Invalid date format"
     return ""
-
