@@ -8,135 +8,55 @@ from utils.time_utils import TIME_WINDOW_OPTIONS, TIME_WINDOW_ALL
 
 
 def display_universe(universe):
-    # Use a container to isolate this component
-    universe_container = st.container()
+    st.header(f"📈 {universe.get('universe_name')} Universe")
 
-    with universe_container:
-        if st.session_state.get("refresh_universe_dashboard", False):
-            st.session_state["refresh_universe_dashboard"] = False
-            # Create a container-specific rerun indicator instead of a full page rerun
-            st.session_state["universe_data_refreshed"] = True
+    sources, features_by_source = get_available_sources(universe)
+    
+    if not sources:
+        st.warning("No feed data available. Please generate some data first.")
+        return
+    
+    # Directly use widget keys for managing selections
+    col1, col2, col3 = st.columns([1, 1, 1])
 
-        header_col, updated_col, refresh_col = st.columns([2, 2, 2])
-        with header_col:
-            st.header(f"📈 {universe.get('universe_name')} Universe")
-
-        sources, features_by_source = get_available_sources(universe)
-
-        if not sources:
-            st.warning("No feed data available. Please generate some data first.")
-            return
-
-        st.markdown(
-            """
-        <style>
-        .stSelectbox, .stSelectbox > div > label, .stButton, .stWarning, .stCaption, .stInfo {
-            font-size: 1.1rem !important;
-        }
-        h1, h2, h3 {
-            font-size: 1.8rem !important;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
+    with col1:
+        selected_source = st.selectbox(
+            "Data Source:",
+            sources,
+            key="selected_source"
         )
 
-        # Initialize selections in session state
-        if "universe_selected_source" not in st.session_state:
-            st.session_state.universe_selected_source = sources[0] if sources else None
+    available_features = features_by_source.get(selected_source, [])
+    
+    with col2:
+        selected_feature = st.selectbox(
+            "Feature:",
+            available_features if available_features else ["No features available"],
+            key=f"selected_feature_{selected_source}",  # unique per source
+            disabled=not available_features
+        )
 
-        if "universe_selected_feature" not in st.session_state:
-            features = features_by_source.get(st.session_state.universe_selected_source, [])
-            st.session_state.universe_selected_feature = features[0] if features else None
+    with col3:
+        time_window = st.selectbox(
+            "Time Window:",
+            TIME_WINDOW_OPTIONS,
+            key="selected_time_window"
+        )
 
-        if "universe_time_window" not in st.session_state:
-            st.session_state.universe_time_window = TIME_WINDOW_ALL
+    # Fetch and display last updated timestamp directly
+    if available_features and selected_feature != "No features available":
+        last_update = APIClient.get_latest_feed_timestamp(
+            source=selected_source,
+            feature_name=selected_feature,
+            universe_name=universe.get("universe_name"),
+        )
+        if last_update:
+            ts = pd.to_datetime(last_update)
+            st.caption(f"Last updated: {ts.strftime('%Y-%m-%d %H:%M:%S')}" if pd.notnull(ts) else "Last updated: N/A")
 
-        col1, col2, col3 = st.columns([1, 1, 1])
-
-        with col1:
-            selected_source = st.selectbox(
-                "Data Source:",
-                sources,
-                index=sources.index(st.session_state.universe_selected_source)
-                if st.session_state.universe_selected_source in sources
-                else 0,
-                key="feature_source_selector",
-                on_change=lambda: source_changed(),
-            )
-            st.session_state.universe_selected_source = selected_source
-
-        available_features = features_by_source.get(selected_source, [])
-
-        with col2:
-            default_index = 0
-            if st.session_state.universe_selected_feature in available_features:
-                default_index = available_features.index(st.session_state.universe_selected_feature)
-
-            selected_feature = st.selectbox(
-                "Feature:",
-                available_features if available_features else ["No features available"],
-                index=default_index,
-                key="feature_name_selector",
-                disabled=not available_features,
-            )
-            st.session_state.universe_selected_feature = selected_feature
-
-        with col3:
-            # First, update the session state in the on_change handler
-            def on_time_window_change():
-                # Get the value directly from the widget key
-                st.session_state.universe_time_window = st.session_state.feature_time_selector
-                # Force a refresh when time window changes
-                st.cache_data.clear()
-                st.session_state["universe_data_refreshed"] = True
-                print(f"Time window changed to: {st.session_state.universe_time_window}")
-
-            # Then render the selectbox with the on_change handler
-            st.selectbox(
-                "Time Window:",
-                TIME_WINDOW_OPTIONS,
-                index=TIME_WINDOW_OPTIONS.index(st.session_state.universe_time_window),
-                key="feature_time_selector",
-                on_change=on_time_window_change,
-            )
-
-            # Use the session state value directly
-            time_window = st.session_state.universe_time_window
-            print(f"Current time window: {time_window}")
-
-        last_update = None
-        if available_features and selected_feature != "No features available":
-            last_update = APIClient.get_latest_feed_timestamp(
-                source=selected_source,
-                feature_name=selected_feature,
-                universe_name=universe.get("universe_name"),
-            )
-        with updated_col:
-            if last_update:
-                ts = pd.to_datetime(last_update)
-                if pd.notnull(ts):
-                    st.caption(
-                        f"<span style='font-size:15px;'>Last updated: {ts.strftime('%Y-%m-%d %H:%M:%S')}</span>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.caption(
-                        "<span style='font-size:15px;'>Last updated: N/A</span>",
-                        unsafe_allow_html=True,
-                    )
-        with refresh_col:
-
-            def refresh_feed():
-                st.cache_data.clear()
-                st.session_state["universe_data_refreshed"] = True
-
-            st.button("🔄 Refresh", help="Refresh feed data", key="universe_refresh_button", on_click=refresh_feed)
-
-        if available_features and selected_feature != "No features available":
-            display_universe_plot(universe.get("universe_name"), selected_source, selected_feature, time_window)
-        else:
-            st.info("Please select a data source and feature to view the data.")
+        display_universe_plot(universe.get("universe_name"), selected_source, selected_feature, time_window)
+    else:
+        st.info("Please select a valid data source and feature to view the data.")
 
 
 def get_available_sources(universe):

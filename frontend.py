@@ -123,8 +123,11 @@ def main():
                 "selected_universe": selected_universe,
                 "refresh_universe_dashboard": True,
                 "refresh_topic_dashboard": True,
+                "active_tab": "universe",  # Force active tab to 'universe'
+                "show_correlation_finder": False  # Ensure correlation finder is closed
             }
         )
+
 
     apply_theme(dark_mode)
 
