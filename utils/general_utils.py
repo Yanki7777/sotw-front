@@ -36,3 +36,13 @@ def filter_dataframe_by_time(df, time_window):
         df["created_timestamp"] = pd.to_datetime(df["created_timestamp"])
 
     return df[df["created_timestamp"] >= cutoff]
+
+
+def get_topic_description(universe, topic_name):
+    """Get the description for a topic from the universe object."""
+   
+    if universe and "topics" in universe:
+        for topic in universe.get("topics", []):
+            if topic.get("name") == topic_name:
+                return topic.get("description", "")
+    return ""   

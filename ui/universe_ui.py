@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import TIME_WINDOW_OPTIONS, TIME_WINDOW_ALL
+from utils.general_utils import get_topic_description, TIME_WINDOW_OPTIONS, TIME_WINDOW_ALL
 
 
 def display_universe(universe):
@@ -84,9 +84,8 @@ def display_universe_plot(universe_name, selected_source, selected_feature, time
     if "universes" in st.session_state:
         universe = next((u for u in st.session_state["universes"] if u.get("universe_name") == universe_name), None)
 
-    # Use get_topic_description to get the description for the selected feature
     if universe and selected_feature:
-        desc = APIClient.get_topic_description(universe, selected_feature)
+        desc = get_topic_description(universe, selected_feature)
         if desc:
             topic_display = f"{selected_feature} ({desc})"
         else:

@@ -2,7 +2,7 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 from utils.api_client import APIClient
-from utils.time_utils import (
+from utils.general_utils import (
     TIME_WINDOW_ALL,    
     filter_dataframe_by_time,
 )

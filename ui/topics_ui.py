@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils.plot_utils import create_one_feature_plot
 from utils.api_client import APIClient
-from utils.time_utils import filter_dataframe_by_time, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
+from utils.general_utils import filter_dataframe_by_time, get_topic_description, TIME_WINDOW_OPTIONS, TIME_WINDOW_DAY
 
 
 def fetch_data(universe_name):
@@ -16,7 +16,7 @@ def display_summary(topic_data):
 
 
 def topic_display_name(universe, topic):
-    desc = APIClient.get_topic_description(universe, topic)
+    desc = get_topic_description(universe, topic)
     return f"{topic} ({desc})" if desc else topic
 
 
