@@ -120,16 +120,13 @@ class APIClient:
             response = requests.post(f"{API_BASE_URL}/feed/newsapi", json=universe)
             data = response.json()
             return (
-                data.get("all_news", {}),
-                data.get("topic_averages", {}),
-                data.get("overall_sentiment_average", 0),
-                data.get("latest_articles", {}),
-                data.get("article_counts", {}),
+                data.get("universe_feeds", []),
+                data.get("overall_sentiment_average", 0.0),
             )
         except Exception as e:
             print(f"Error processing NewsAPI feed: {e}")
-            return {}, {}, 0, {}, {}
-
+            return [], 0.0
+        
     @staticmethod
     def create_gnews_feed(universe):
         try:

@@ -12,19 +12,13 @@ def display_newsapi_source(universe):
 
     # Fetch news for all topics with UI feedback
     with st.spinner(f"Fetching news for {len(universe.get('topics'))} topic(s)..."):
-        all_topic_news, topic_averages, overall_sentiment_average, latest_articles, article_counts = (
-            APIClient.create_newsapi_feed(universe)
-        )
+        universe_feeds, overall_sentiment_average = APIClient.create_newsapi_feed(universe)
 
     print(
-        f"NEWSAPI source data summary: {len(all_topic_news)} data points analyzed across {len(topic_averages)} topics"
+        f"NEWSAPI source data summary: {len(universe_feeds)} topics analyzed."
     )
 
-    has_news = False
-    for news_list in all_topic_news.values():
-        if news_list:
-            has_news = True
-            break
+    has_news = any(feed["articles"] for feed in universe_feeds)
 
     if not has_news:
         st.warning("No news data found for the selected topics.")
@@ -53,25 +47,23 @@ def display_newsapi_source(universe):
             unsafe_allow_html=True,
         )
 
-    # Create a dataframe to display individual topic sentiments with article counts and latest article dates
+    # Create a dataframe to display individual topic sentiments
     topic_data = []
-    for topic, avg in topic_averages.items():
-        latest_date = ""
-        if topic in latest_articles and latest_articles[topic] and "published_date" in latest_articles[topic]:
-            latest_date = latest_articles[topic]["published_date"]
+    for feed in universe_feeds:
+        latest_date = feed["latest_article"]["published_date"] if feed["latest_article"] else ""
 
         topic_data.append(
             {
-                "topic": topic,
-                "Sentiment Score": avg,
-                "Articles": article_counts.get(topic, 0),
+                "topic": feed["topic"],
+                "Sentiment Score": feed["sentiment_average"],
+                "Articles": feed["article_count"],
                 "Latest Article": latest_date,
             }
         )
 
     if topic_data:
         df = pd.DataFrame(topic_data)
-        st.subheader("NewsAPI topic Sentiment Scores")
+        st.subheader("NewsAPI Topic Sentiment Scores")
 
         # Use st.write with HTML for custom styling
         html = """
@@ -103,21 +95,19 @@ def display_newsapi_source(universe):
     st.header("News Articles")
 
     # Display news for each topic
-    for topic, news_items in all_topic_news.items():
-        if not news_items:
+    for feed in universe_feeds:
+        if not feed["articles"]:
             continue
 
-        st.subheader(f"{topic.upper()} ({article_counts.get(topic, 0)} articles)")
+        st.subheader(f"{feed['topic'].upper()} ({feed['article_count']} articles)")
 
         # Display each news article
-        for item in news_items:
+        for item in feed["articles"]:
             col1, col2 = st.columns([1, 3])
 
             with col1:
-                # Display topic symbol prominently
-                st.markdown(f"<h3 style='text-align:left;'>{topic.upper()}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='text-align:left;'>{feed['topic'].upper()}</h3>", unsafe_allow_html=True)
 
-                # Display sentiment with appropriate color based on score
                 sentiment_score = item["sentiment"]
                 if sentiment_score > 0:
                     st.markdown(

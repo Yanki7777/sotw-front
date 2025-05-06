@@ -9,6 +9,7 @@ from ui.correlation_finder_ui import display_correlation_finder
 from ui.source_ui import display_source_fetch_buttons
 from ui.universe_ui import display_universe
 from ui.topics_ui import display_topic
+from utils.general_utils import TIME_WINDOW_DAY
 
 # Apply patches before importing streamlit
 from streamlit_patches import apply_torch_classes_patch
@@ -37,7 +38,8 @@ def initialize_session_state():
     st.session_state.setdefault("show_correlation_finder", False)
     st.session_state.setdefault("active_tab", "universe")
     st.session_state.setdefault("refresh_universe_dashboard", False)
-    st.session_state.setdefault("refresh_topic_dashboard", False)
+    st.session_state.setdefault("refresh_topic_dashboard", False)    
+    st.session_state.setdefault("universe_time_window", TIME_WINDOW_DAY)
 
 def setup_page():
     st.set_page_config(
